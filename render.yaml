@@ -34,3 +34,5 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: MCV_API_KEY
+        value: rnd_BKcv4ob3L0ZjNnf13skorjNIhlI6
