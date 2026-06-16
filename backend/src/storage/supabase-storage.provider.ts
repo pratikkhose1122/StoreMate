@@ -2,6 +2,7 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
 import { StorageProvider } from './storage.provider';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
+import * as WebSocket from 'ws';
 
 @Injectable()
 export class SupabaseStorageProvider implements StorageProvider {
@@ -16,7 +17,15 @@ export class SupabaseStorageProvider implements StorageProvider {
       throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined');
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+      },
+      global: {
+        // @ts-ignore
+        WebSocket: WebSocket,
+      },
+    });
   }
 
   /**
