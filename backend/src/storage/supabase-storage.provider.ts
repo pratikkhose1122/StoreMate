@@ -4,6 +4,11 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import * as WebSocket from 'ws';
 
+// Required for Node.js < 22 environments (like Render)
+if (typeof global !== 'undefined') {
+  (global as any).WebSocket = WebSocket;
+}
+
 @Injectable()
 export class SupabaseStorageProvider implements StorageProvider {
   private readonly logger = new Logger(SupabaseStorageProvider.name);
@@ -20,11 +25,7 @@ export class SupabaseStorageProvider implements StorageProvider {
     this.supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: false,
-      },
-      global: {
-        // @ts-ignore
-        WebSocket: WebSocket,
-      },
+      }
     });
   }
 
