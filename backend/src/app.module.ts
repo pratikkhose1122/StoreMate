@@ -18,6 +18,7 @@ import { StorageModule } from './storage/storage.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { StaffModule } from './staff/staff.module';
 import { HealthModule } from './health/health.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -51,6 +52,7 @@ import { AppController } from './app.controller';
     ActivityLogsModule,
     StaffModule,
     HealthModule,
+    WhatsappModule,
   ],
   controllers: [AppController],
 })
