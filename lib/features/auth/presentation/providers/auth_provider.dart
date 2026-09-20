@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:storemate/core/providers/core_providers.dart';
 import 'package:storemate/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:storemate/features/auth/data/datasources/firebase_auth_datasource.dart';
+import 'package:dio/dio.dart';
 import 'package:storemate/features/auth/data/repositories/auth_repository.dart';
 import 'package:storemate/features/auth/domain/auth_state.dart';
 
@@ -53,7 +55,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     try {
-      final session = await _repository.restoreSession();
+      debugPrint('Auth Start: ${DateTime.now().toIso8601String()}');
+      final session = await _repository.restoreSession().timeout(const Duration(seconds: 15));
+      debugPrint('Auth Complete: ${DateTime.now().toIso8601String()}');
 
       if (session == null) {
         state = AuthState.unauthenticated();
@@ -76,8 +80,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } catch (e) {
-      debugPrint('AuthNotifier: checkAuthStatus failed — $e');
-      state = AuthState.unauthenticated();
+      debugPrint('AuthNotifier: checkAuthStatus failed/timed out — $e');
+      state = AuthState.unauthenticated(); // Clean fallback to Login
     }
   }
 
@@ -85,25 +89,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> sendOtp(String phoneNumber) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    await _repository.sendOtp(
-      phoneNumber: phoneNumber,
-      onCodeSent: (verificationId) {
-        state = state.copyWith(
-          verificationId: verificationId,
-          isOtpSent: true,
-          isLoading: false,
-        );
-      },
-      onAutoVerified: (PhoneAuthCredential credential) {
-        _handleAutoVerification(credential);
-      },
-      onError: (errorMessage) {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: errorMessage,
-        );
-      },
-    );
+    debugPrint('AuthNotifier: OTP Request Started for $phoneNumber');
+    try {
+      await _repository.sendOtp(
+        phoneNumber: phoneNumber,
+        onCodeSent: (verificationId) {
+          debugPrint('AuthNotifier: Code Sent Callback Triggered - ID: $verificationId');
+          state = state.copyWith(
+            verificationId: verificationId,
+            isOtpSent: true,
+            isLoading: false,
+          );
+        },
+        onAutoVerified: (PhoneAuthCredential credential) {
+          debugPrint('AuthNotifier: Auto Verification Triggered');
+          _handleAutoVerification(credential);
+        },
+        onError: (errorMessage) {
+          debugPrint('AuthNotifier: Verification Failed Callback Triggered - Error: $errorMessage');
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: errorMessage,
+          );
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthNotifier: FirebaseAuthException during sendOtp - Code: ${e.code}, Message: ${e.message}');
+      String message;
+      switch (e.code) {
+        case 'invalid-phone-number':
+          message = 'The provided phone number is not valid.';
+          break;
+        case 'too-many-requests':
+          message = 'Too many requests. Please try again later.';
+          break;
+        case 'app-not-authorized':
+          message = 'App verification failed. Please ensure the app is genuine and try again.';
+          break;
+        case 'operation-not-allowed':
+          message = 'Phone authentication is not enabled for this project.';
+          break;
+        default:
+          message = e.message ?? 'An unknown Firebase error occurred.';
+      }
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: message,
+      );
+    } catch (e) {
+      debugPrint('AuthNotifier: Unexpected error during sendOtp - $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to send OTP. Please check your connection and try again.',
+      );
+    }
   }
 
   /// Handle auto-verification (Android only).
@@ -131,6 +170,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isOtpSent: false,
         );
       }
+    } on DioException catch (e) {
+      String message;
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          message = 'Server is taking too long to respond. Please try again.';
+          break;
+        case DioExceptionType.connectionError:
+          message = 'No internet connection. Please check your network and try again.';
+          break;
+        case DioExceptionType.badResponse:
+          final statusCode = e.response?.statusCode;
+          if (statusCode == 401 || statusCode == 403) {
+            message = 'Authentication failed. You do not have permission to access this.';
+          } else if (statusCode != null && statusCode >= 500) {
+            message = 'Temporary server error. Please try again later.';
+          } else {
+            message = 'An unexpected error occurred. Please try again.';
+          }
+          break;
+        default:
+          if (e.error is SocketException) {
+            message = 'No internet connection. Please check your network and try again.';
+          } else {
+            message = 'An unexpected error occurred. Please try again.';
+          }
+      }
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: message,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -177,22 +248,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
           message = e.message ?? 'Verification failed. Please try again.';
       }
       state = state.copyWith(isLoading: false, errorMessage: message);
-    } catch (e) {
+    } on DioException catch (e) {
+      String message;
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          message = 'Server is taking too long to respond. Please try again.';
+          break;
+        case DioExceptionType.connectionError:
+          message = 'No internet connection. Please check your network and try again.';
+          break;
+        case DioExceptionType.badResponse:
+          final statusCode = e.response?.statusCode;
+          if (statusCode == 401 || statusCode == 403) {
+            message = 'Authentication failed. You do not have permission to access this.';
+          } else if (statusCode != null && statusCode >= 500) {
+            message = 'Temporary server error. Please try again later.';
+          } else {
+            message = 'An unexpected error occurred. Please try again.';
+          }
+          break;
+        default:
+          if (e.error is SocketException) {
+            message = 'No internet connection. Please check your network and try again.';
+          } else {
+            message = 'An unexpected error occurred. Please try again.';
+          }
+          debugPrint('AuthNotifier: Unknown parsing error: $e');
+      }
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Login failed. Please try again.',
+        errorMessage: message,
+      );
+    } catch (e) {
+      debugPrint('AuthNotifier: Unknown error: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'An unexpected error occurred: $e',
       );
     }
   }
 
   /// Update state after successful shop registration.
   void onShopRegistered({
-    required String accessToken,
     required dynamic shop,
   }) {
     state = state.copyWith(
       status: AuthStatus.authenticated,
-      accessToken: accessToken,
+      shop: shop,
     );
   }
 

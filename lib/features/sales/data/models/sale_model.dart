@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:storemate/features/customer/data/models/customer_model.dart';
+import 'package:decimal/decimal.dart';
+import 'package:storemate/core/utils/decimal_converter.dart';
 
 part 'sale_model.freezed.dart';
 part 'sale_model.g.dart';
@@ -11,10 +13,10 @@ abstract class SaleItemModel with _$SaleItemModel {
     required String saleId,
     String? productId,
     required String productName,
-    required int quantity,
-    required double unitPrice,
-    required double taxPercentage,
-    required double subtotal,
+    @DecimalConverter() required Decimal quantity,
+    @DecimalConverter() required Decimal unitPrice,
+    @DecimalConverter() required Decimal taxPercentage,
+    @DecimalConverter() required Decimal subtotal,
   }) = _SaleItemModel;
 
   factory SaleItemModel.fromJson(Map<String, dynamic> json) =>
@@ -26,7 +28,7 @@ abstract class PaymentModel with _$PaymentModel {
   const factory PaymentModel({
     required String id,
     required String saleId,
-    required double amount,
+    @DecimalConverter() required Decimal amount,
     required String paymentMethod,
     required String status,
     String? transactionId,
@@ -45,12 +47,14 @@ abstract class SaleModel with _$SaleModel {
     CustomerModel? customer,
     required String invoiceNumber,
     required String status,
-    required double totalAmount,
-    required double discountAmount,
-    required double taxAmount,
-    required double netAmount,
-    required double amountPaid,
-    required double amountDue,
+    @DecimalConverter() required Decimal totalAmount,
+    @DecimalConverter() required Decimal discountAmount,
+    @DecimalConverter() required Decimal taxAmount,
+    @DecimalConverter() required Decimal netAmount,
+    @DecimalConverter() required Decimal amountPaid,
+    @DecimalConverter() required Decimal amountDue,
+    @DecimalConverter() Decimal? refundAmount,
+    DateTime? lastRefundAt,
     String? shopNameSnapshot,
     String? shopAddressSnapshot,
     String? shopPhoneSnapshot,

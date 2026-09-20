@@ -29,7 +29,7 @@ class InventoryHistoryTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: logs.length,
-          separatorBuilder: (_, __) => const Divider(),
+          separatorBuilder: (a, b) => const Divider(),
           itemBuilder: (context, index) {
             final log = logs[index];
             final isAddition = log.quantityChange > 0;

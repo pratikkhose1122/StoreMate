@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:storemate/features/product/data/models/product_model.dart';
 import 'package:storemate/features/sales/data/models/cart_item_model.dart';
+import 'package:decimal/decimal.dart';
 
 class CartState {
   final List<CartItemModel> items;
@@ -22,46 +23,64 @@ class CartState {
     );
   }
 
-  double get totalDiscount => items.fold(0, (sum, item) => sum + item.discountAmount);
-  double get totalTax => items.fold(0, (sum, item) => sum + item.taxAmount);
-  double get totalAmount => items.fold(0, (sum, item) => sum + item.total);
+  Decimal get totalDiscount => items.fold(Decimal.zero, (sum, item) => sum + (item.discountAmount ?? Decimal.zero));
+  Decimal get totalTax => items.fold(Decimal.zero, (sum, item) => sum + item.taxAmount);
+  Decimal get totalAmount => items.fold(Decimal.zero, (sum, item) => sum + item.total);
+  Decimal get totalItems => items.fold(Decimal.zero, (sum, item) => sum + item.quantity);
 }
 
 class CartNotifier extends StateNotifier<CartState> {
   CartNotifier() : super(CartState());
 
-  void addProduct(ProductModel product, {int quantity = 1}) {
-    final index = state.items.indexWhere((i) => i.product.id == product.id);
+  void addProduct(ProductModel product, {Decimal? quantity}) {
+    final qty = quantity ?? Decimal.one;
+    final index = state.items.indexWhere((i) => !i.isManual && i.product?.id == product.id);
     if (index >= 0) {
       final item = state.items[index];
       final newItems = List<CartItemModel>.from(state.items);
-      newItems[index] = item.copyWith(quantity: item.quantity + quantity);
+      newItems[index] = item.copyWith(quantity: item.quantity + qty);
       state = state.copyWith(items: newItems);
     } else {
       state = state.copyWith(items: [
         ...state.items,
-        CartItemModel(product: product, quantity: quantity),
+        CartItemModel(product: product, quantity: qty, isManual: false),
       ]);
     }
   }
 
-  void updateQuantity(String productId, int quantity) {
-    if (quantity <= 0) {
-      removeProduct(productId);
+  void addManualItem({required String name, required Decimal price, required Decimal quantity, Decimal? taxPercentage}) {
+    final tax = taxPercentage ?? Decimal.zero;
+    state = state.copyWith(items: [
+      ...state.items,
+      CartItemModel(
+        product: null,
+        isManual: true,
+        manualName: name,
+        manualPrice: price,
+        manualTaxPercentage: tax,
+        quantity: quantity,
+      ),
+    ]);
+  }
+
+  void updateQuantity(int index, Decimal quantity) {
+    if (quantity <= Decimal.zero) {
+      removeProduct(index);
       return;
     }
-    final index = state.items.indexWhere((i) => i.product.id == productId);
-    if (index >= 0) {
+    if (index >= 0 && index < state.items.length) {
       final newItems = List<CartItemModel>.from(state.items);
       newItems[index] = newItems[index].copyWith(quantity: quantity);
       state = state.copyWith(items: newItems);
     }
   }
 
-  void removeProduct(String productId) {
-    state = state.copyWith(
-      items: state.items.where((i) => i.product.id != productId).toList(),
-    );
+  void removeProduct(int index) {
+    if (index >= 0 && index < state.items.length) {
+      final newItems = List<CartItemModel>.from(state.items);
+      newItems.removeAt(index);
+      state = state.copyWith(items: newItems);
+    }
   }
 
   void setCustomer(String customerId) {

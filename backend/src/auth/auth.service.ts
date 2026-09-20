@@ -74,15 +74,24 @@ export class AuthService {
    * 6. Generate and return JWT
    */
   async login(loginDto: LoginDto): Promise<LoginResponse> {
+    const startTime = Date.now();
+    this.logger.log('[AUTH_LOGIN] Request received');
+    
     // Step 1: Verify Firebase token
     let decodedToken;
     try {
+      this.logger.log('[AUTH_LOGIN] Firebase verification start');
+      const fbStart = Date.now();
       decodedToken = await verifyFirebaseToken(loginDto.firebaseToken);
-    } catch (error) {
-      this.logger.warn(
-        `Firebase token verification failed: ${(error as Error).message}`,
-      );
-      throw new UnauthorizedException('Invalid or expired Firebase token');
+      this.logger.log(`[AUTH_LOGIN] Firebase verification complete: ${Date.now() - fbStart}ms`);
+    } catch (error: any) {
+      console.error('===== FIREBASE VERIFY ERROR =====');
+      console.error('Code:', error.code);
+      console.error('Message:', error.message);
+      console.error('Stack:', error.stack);
+      console.error('Full Error:', error);
+      console.error('=================================');
+      throw new UnauthorizedException(`${error.code}: ${error.message}`);
     }
 
     const firebaseUid = decodedToken.uid;
@@ -98,7 +107,10 @@ export class AuthService {
     const normalizedPhone = phoneNumber.replace(/^\+91/, '');
 
     // Step 2: Find user by firebaseUid
+    this.logger.log(`[AUTH_LOGIN] User lookup start (UID: ${firebaseUid})`);
+    const userLookupStart = Date.now();
     let user = await this.usersService.findByFirebaseUid(firebaseUid);
+    this.logger.log(`[AUTH_LOGIN] User lookup complete: ${Date.now() - userLookupStart}ms`);
 
     if (!user) {
       // Step 2.5: Check if user was invited by mobile number
@@ -117,11 +129,12 @@ export class AuthService {
         this.logger.log(`User ${normalizedPhone} accepted staff invitation.`);
       } else {
         // Step 3: New user — create record
-        this.logger.log(`New user login: ${normalizedPhone}`);
+        this.logger.log(`AuthService: New user login, creating record: ${normalizedPhone}`);
         user = await this.usersService.create({
           firebaseUid,
           mobileNumber: normalizedPhone,
         });
+        this.logger.log('AuthService: User created successfully');
         // Reload with shop relation
         user = await this.usersService.findByFirebaseUid(firebaseUid);
       }
@@ -131,18 +144,29 @@ export class AuthService {
       }
     } else {
       // User found. Check if inactive
+      this.logger.log('AuthService: Existing user found');
       if (!user.isActive) {
         throw new UnauthorizedException('Your account has been deactivated.');
       }
       
       // Step 4: Existing user — update last login
+      this.logger.log('[AUTH_LOGIN] Update last login start');
+      const updateStart = Date.now();
       await this.usersService.updateLastLogin(user.id);
+      this.logger.log(`[AUTH_LOGIN] Update last login complete: ${Date.now() - updateStart}ms`);
       user.lastLoginAt = new Date();
     }
 
     // Step 5: Generate JWT
+    this.logger.log('[AUTH_LOGIN] JWT generation start');
+    const jwtStart = Date.now();
     const accessToken = this.generateJwt(user);
+    this.logger.log(`[AUTH_LOGIN] JWT generation complete: ${Date.now() - jwtStart}ms`);
+    
     const onboardingRequired = !user.shopId;
+    this.logger.log(`AuthService: Shop found? ${user.shopId ? 'Yes' : 'No'}`);
+    this.logger.log('[AUTH_LOGIN] Response returned');
+    this.logger.log(`[AUTH_LOGIN] Total duration: ${Date.now() - startTime}ms`);
 
     return {
       accessToken,
@@ -215,5 +239,19 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload);
+  }
+
+  getFirebaseDebug() {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const admin = require('firebase-admin');
+    const app = admin.apps.length > 0 ? admin.app() : null;
+    const options = app ? app.options : null;
+    return {
+      firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+      serviceAccountProjectId: options?.projectId || options?.credential?.projectId || 'unknown',
+      serviceAccountClientEmail: options?.credential?.clientEmail || 'unknown',
+      hasCredentials: !!options?.credential,
+      appName: app ? app.name : 'no-app'
+    };
   }
 }

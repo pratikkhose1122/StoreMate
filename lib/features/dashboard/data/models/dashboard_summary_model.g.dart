@@ -13,9 +13,11 @@ _DashboardSummaryModel _$DashboardSummaryModelFromJson(
   totalCategories: (json['totalCategories'] as num).toInt(),
   lowStockProducts: (json['lowStockProducts'] as num).toInt(),
   outOfStockProducts: (json['outOfStockProducts'] as num).toInt(),
-  inventoryValue: (json['inventoryValue'] as num).toDouble(),
-  todaysSales: (json['todaysSales'] as num?)?.toDouble() ?? 0,
-  todaysProfit: (json['todaysProfit'] as num?)?.toDouble() ?? 0,
+  inventoryValue: const DecimalConverter().fromJson(json['inventoryValue']),
+  todaysSales: const DecimalConverter().fromJson(json['todaysSales']),
+  todaysProfit: const DecimalConverter().fromJson(json['todaysProfit']),
+  todaysTransactionCount:
+      (json['todaysTransactionCount'] as num?)?.toInt() ?? 0,
   recentMovements:
       (json['recentMovements'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
@@ -40,9 +42,10 @@ Map<String, dynamic> _$DashboardSummaryModelToJson(
   'totalCategories': instance.totalCategories,
   'lowStockProducts': instance.lowStockProducts,
   'outOfStockProducts': instance.outOfStockProducts,
-  'inventoryValue': instance.inventoryValue,
-  'todaysSales': instance.todaysSales,
-  'todaysProfit': instance.todaysProfit,
+  'inventoryValue': const DecimalConverter().toJson(instance.inventoryValue),
+  'todaysSales': const DecimalConverter().toJson(instance.todaysSales),
+  'todaysProfit': const DecimalConverter().toJson(instance.todaysProfit),
+  'todaysTransactionCount': instance.todaysTransactionCount,
   'recentMovements': instance.recentMovements,
   'recentProducts': instance.recentProducts,
   'lowStockProductsList': instance.lowStockProductsList,

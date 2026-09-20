@@ -1,102 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app_colors.dart';
 
-/// StoreMate typography system using Google Fonts.
-///
-/// Headings: Poppins (bold, modern)
-/// Body: Inter (clean, highly readable)
+/// StoreMate V2 Typography System
+/// Strictly uses Inter with specific weights.
+/// 
+/// Note: Colors are no longer hardcoded here. They inherit from Theme.of(context).textTheme
+/// or should be passed explicitly using `.copyWith(color: context.colors.XXX)` in UI files.
 class AppTextStyles {
   AppTextStyles._();
 
-  // ── Headings (Poppins) ────────────────────────────────────
-  static TextStyle get h1 => GoogleFonts.poppins(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.2,
-      );
+  // ── Display Numbers (Revenue, Sales, Totals) - ExtraBold w800 ──
+  static TextStyle get displayXl => GoogleFonts.inter(
+        fontSize: 36, fontWeight: FontWeight.w800, height: 1.1);
+  static TextStyle get displayLg => GoogleFonts.inter(
+        fontSize: 32, fontWeight: FontWeight.w800, height: 1.1);
+  static TextStyle get displayMd => GoogleFonts.inter(
+        fontSize: 28, fontWeight: FontWeight.w800, height: 1.15);
 
-  static TextStyle get h2 => GoogleFonts.poppins(
-        fontSize: 24,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  // ── Screen Titles - Bold w700 ──
+  static TextStyle get titleXl => GoogleFonts.inter(
+        fontSize: 32, fontWeight: FontWeight.w700, height: 1.2);
+  static TextStyle get titleLg => GoogleFonts.inter(
+        fontSize: 28, fontWeight: FontWeight.w700, height: 1.2);
 
-  static TextStyle get h3 => GoogleFonts.poppins(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.3,
-      );
+  // ── Section Titles - Bold w700 ──
+  static TextStyle get titleMd => GoogleFonts.inter(
+        fontSize: 24, fontWeight: FontWeight.w700, height: 1.2);
+  static TextStyle get titleSm => GoogleFonts.inter(
+        fontSize: 20, fontWeight: FontWeight.w700, height: 1.2);
 
-  static TextStyle get h4 => GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
-        height: 1.4,
-      );
+  // ── Product Names - SemiBold w600 ──
+  static TextStyle get productLg => GoogleFonts.inter(
+        fontSize: 18, fontWeight: FontWeight.w600, height: 1.4);
+  static TextStyle get productMd => GoogleFonts.inter(
+        fontSize: 16, fontWeight: FontWeight.w600, height: 1.4);
 
-  // ── Body (Inter) ──────────────────────────────────────────
-  static TextStyle get bodyLarge => GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
-      );
+  // ── Labels - Medium w500 ──
+  static TextStyle get labelLg => GoogleFonts.inter(
+        fontSize: 16, fontWeight: FontWeight.w500, height: 1.4);
+  static TextStyle get labelMd => GoogleFonts.inter(
+        fontSize: 14, fontWeight: FontWeight.w500, height: 1.4);
+  static TextStyle get labelSm => GoogleFonts.inter(
+        fontSize: 12, fontWeight: FontWeight.w500, height: 1.4);
 
-  static TextStyle get bodyMedium => GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.5,
-      );
+  // ── Body Text - Regular w400 ──
+  static TextStyle get bodyLg => GoogleFonts.inter(
+        fontSize: 16, fontWeight: FontWeight.w400, height: 1.5);
+  static TextStyle get bodyMd => GoogleFonts.inter(
+        fontSize: 14, fontWeight: FontWeight.w400, height: 1.5);
+  static TextStyle get bodySm => GoogleFonts.inter(
+        fontSize: 12, fontWeight: FontWeight.w400, height: 1.5);
 
-  static TextStyle get bodySmall => GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-        height: 1.5,
-      );
+  // ── Mono / Tabular Numbers - for currency & metrics ──
+  static TextStyle get monoLg => GoogleFonts.inter(
+        fontSize: 24, fontWeight: FontWeight.w700, height: 1.1,
+        fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle get monoMd => GoogleFonts.inter(
+        fontSize: 18, fontWeight: FontWeight.w600, height: 1.2,
+        fontFeatures: const [FontFeature.tabularFigures()]);
+  static TextStyle get monoSm => GoogleFonts.inter(
+        fontSize: 14, fontWeight: FontWeight.w500, height: 1.2,
+        fontFeatures: const [FontFeature.tabularFigures()]);
 
-  // ── Labels ────────────────────────────────────────────────
-  static TextStyle get labelLarge => GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-        height: 1.4,
-      );
+  // ── Buttons ──
+  static TextStyle get btnLarge => GoogleFonts.inter(
+        fontSize: 16, fontWeight: FontWeight.w600, height: 1.2);
+  static TextStyle get btnMd => GoogleFonts.inter(
+        fontSize: 14, fontWeight: FontWeight.w600, height: 1.2);
 
-  static TextStyle get labelMedium => GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textSecondary,
-        height: 1.4,
-      );
-
-  // ── Buttons ───────────────────────────────────────────────
-  static TextStyle get buttonLarge => GoogleFonts.inter(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textOnPrimary,
-        height: 1.2,
-        letterSpacing: 0.5,
-      );
-
-  static TextStyle get buttonMedium => GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textOnPrimary,
-        height: 1.2,
-        letterSpacing: 0.3,
-      );
-
-  // ── Caption ───────────────────────────────────────────────
-  static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textTertiary,
-        height: 1.4,
-      );
+  // ── Legacy Aliases ──
+  static TextStyle get h1 => titleXl;
+  static TextStyle get h2 => titleLg;
+  static TextStyle get h3 => titleMd;
+  static TextStyle get h4 => titleSm;
+  
+  static TextStyle get bodyLarge => bodyLg;
+  static TextStyle get bodyMedium => bodyMd;
+  static TextStyle get bodySmall => bodySm;
+  
+  static TextStyle get labelLarge => labelLg;
+  static TextStyle get labelMedium => labelMd;
+  
+  static TextStyle get displayXxl => displayXl;
+  static TextStyle get displaySm => titleSm;
+  
+  static TextStyle get bodyMdStrong => productMd;
+  static TextStyle get bodySmStrong => labelMd;
+  static TextStyle get uberCaption => labelSm;
+  
+  static TextStyle get buttonLarge => btnLarge;
+  static TextStyle get buttonMedium => btnMd;
+  static TextStyle get caption => labelSm;
 }

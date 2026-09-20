@@ -7,12 +7,6 @@ import 'package:storemate/core/constants/app_text_styles.dart';
 import 'package:storemate/features/auth/domain/auth_state.dart';
 import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
 
-/// Splash screen displayed on app launch.
-///
-/// Checks for an existing valid session and navigates accordingly:
-/// - Valid token + shop → Dashboard
-/// - Valid token + no shop → Shop Registration
-/// - No token → Login
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -25,6 +19,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
   late final Animation<double> _scaleAnimation;
+  
+  String _diagnosticStatus = "Initializing App...";
 
   @override
   void initState() {
@@ -51,19 +47,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _animationController.forward();
 
-    // Start auth check after animation begins
     Future.delayed(const Duration(milliseconds: 500), () {
-      debugPrint('Splash started');
+      if (mounted) {
+        setState(() {
+          _diagnosticStatus = "Checking Session...";
+        });
+      }
       ref.read(authProvider.notifier).checkAuthStatus();
     });
 
-    // 5-second maximum splash timeout
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 15), () {
       if (mounted) {
         final status = ref.read(authProvider).status;
         if (status == AuthStatus.initial || status == AuthStatus.loading) {
-          debugPrint('Splash timeout exception: Exceeded 5 seconds. Navigating to Login.');
+          setState(() {
+            _diagnosticStatus = "Timeout. Navigating to Login...";
+          });
+          debugPrint('Navigation Start: ${DateTime.now().toIso8601String()}');
           context.go('/login');
+          debugPrint('Navigation Complete: ${DateTime.now().toIso8601String()}');
         }
       }
     });
@@ -77,28 +79,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Listen for auth state changes to navigate
     ref.listen<AuthState>(authProvider, (previous, next) {
-      debugPrint('Router navigation start');
+      debugPrint('Navigation Start: ${DateTime.now().toIso8601String()}');
       try {
         if (next.status == AuthStatus.unauthenticated) {
+          if (mounted) setState(() => _diagnosticStatus = "Navigating to Login...");
           context.go('/login');
         } else if (next.status == AuthStatus.authenticated) {
+          if (mounted) setState(() => _diagnosticStatus = "Navigating to Dashboard...");
           context.go('/dashboard');
         } else if (next.status == AuthStatus.onboardingRequired) {
+          if (mounted) setState(() => _diagnosticStatus = "Navigating to Shop Setup...");
           context.go('/register-shop');
         }
-        debugPrint('Router navigation success');
+        debugPrint('Navigation Complete: ${DateTime.now().toIso8601String()}');
       } catch (e) {
         debugPrint('Router navigation exception: $e');
       }
     });
 
     return Scaffold(
+      backgroundColor: context.colors.background,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.splashGradient,
-        ),
+        color: context.colors.primary,
         child: SafeArea(
           child: Center(
             child: AnimatedBuilder(
@@ -115,56 +118,60 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // App Icon
                   Container(
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: context.colors.background.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: context.colors.background.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.storefront_rounded,
                       size: 56,
-                      color: Colors.white,
+                      color: context.colors.primaryForeground,
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // App Name
                   Text(
                     AppConstants.appName,
                     style: AppTextStyles.h1.copyWith(
-                      color: Colors.white,
+                      color: context.colors.primaryForeground,
                       fontSize: 36,
                       letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 8),
 
-                  // Tagline
                   Text(
                     AppConstants.appTagline,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
+                    style: AppTextStyles.bodyMd.copyWith(
+                      color: context.colors.primaryForeground.withValues(alpha: 0.8),
                       letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 48),
 
-                  // Loading indicator
                   SizedBox(
                     width: 32,
                     height: 32,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withValues(alpha: 0.8),
+                        context.colors.primaryForeground.withValues(alpha: 0.8),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  Text(
+                    _diagnosticStatus,
+                    style: AppTextStyles.labelSm.copyWith(
+                      color: context.colors.primaryForeground.withValues(alpha: 0.9),
                     ),
                   ),
                 ],

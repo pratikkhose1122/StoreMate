@@ -1,31 +1,31 @@
 enum AppPermission {
-  MANAGE_STAFF,
-  MANAGE_SETTINGS,
-  MANAGE_PRODUCTS,
-  VIEW_REPORTS,
-  MANAGE_CUSTOMERS,
-  POS_CHECKOUT,
+  manageStaff,
+  manageSettings,
+  manageProducts,
+  viewReports,
+  manageCustomers,
+  posCheckout,
 }
 
 class PermissionUtils {
   static const Map<String, List<AppPermission>> _rolePermissions = {
     'owner': [
-      AppPermission.MANAGE_STAFF,
-      AppPermission.MANAGE_SETTINGS,
-      AppPermission.MANAGE_PRODUCTS,
-      AppPermission.VIEW_REPORTS,
-      AppPermission.MANAGE_CUSTOMERS,
-      AppPermission.POS_CHECKOUT,
+      AppPermission.manageStaff,
+      AppPermission.manageSettings,
+      AppPermission.manageProducts,
+      AppPermission.viewReports,
+      AppPermission.manageCustomers,
+      AppPermission.posCheckout,
     ],
     'manager': [
-      AppPermission.MANAGE_PRODUCTS,
-      AppPermission.VIEW_REPORTS,
-      AppPermission.MANAGE_CUSTOMERS,
-      AppPermission.POS_CHECKOUT,
+      AppPermission.manageProducts,
+      AppPermission.viewReports,
+      AppPermission.manageCustomers,
+      AppPermission.posCheckout,
     ],
     'cashier': [
-      AppPermission.MANAGE_CUSTOMERS,
-      AppPermission.POS_CHECKOUT,
+      AppPermission.manageCustomers,
+      AppPermission.posCheckout,
     ],
   };
 

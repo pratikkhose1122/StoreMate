@@ -17,6 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageProvider } from '../storage/storage.provider';
 import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
+import { ProductLookupService } from './product-lookup.service';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -31,6 +32,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly productsBulkService: ProductsBulkService,
+    private readonly productLookupService: ProductLookupService,
   ) {}
 
   @Post()
@@ -41,6 +43,11 @@ export class ProductsController {
   @Get()
   findAll(@Query() query: ProductQueryDto, @CurrentUser() user: JwtPayload) {
     return this.productsService.findAll(user.shopId as string, query);
+  }
+
+  @Get('barcode/:barcode')
+  lookupBarcode(@Param('barcode') barcode: string, @CurrentUser() user: JwtPayload) {
+    return this.productLookupService.getBarcodeProduct(barcode, user.shopId as string);
   }
 
   @Get(':id')

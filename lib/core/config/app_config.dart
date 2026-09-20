@@ -1,32 +1,12 @@
-enum ApiEnvironment {
-  development,
-  staging,
-  production,
-}
-
 class AppConfig {
-  static late final ApiEnvironment _environment;
-  
-  /// Initialize the application environment.
-  /// Must be called before `runApp`.
-  static void init(ApiEnvironment env) {
-    _environment = env;
-  }
-
-  static ApiEnvironment get environment => _environment;
-
-  /// Returns the appropriate Base URL for the current environment.
+  /// Base URL (legacy NestJS API endpoint)
   static String get baseUrl {
-    switch (_environment) {
-      case ApiEnvironment.development:
-        // Local emulator (10.0.2.2) or local physical device IP
-        return 'http://10.0.2.2:3000/api/v1';
-      case ApiEnvironment.staging:
-        // Replace with actual staging URL if deployed
-        return 'https://storemate-api-staging.onrender.com/api/v1';
-      case ApiEnvironment.production:
-        // Replace with the actual Render URL once deployed
-        return 'https://storemate-api.onrender.com/api/v1';
-    }
+    return 'https://storemate-api.onrender.com/api/v1';
   }
+
+  /// Supabase Configuration
+  static const String supabaseUrl = 'https://ztnopsxqjgyqviyjqier.supabase.co';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0bm9wc3hxamd5cXZpeWpxaWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3MDUzODAsImV4cCI6MjEwNDI4MTM4MH0.5FrbEt-XH57cMj1pHZgzm_0sGA1QnQyWoWrBkIi1GTA';
 }
+

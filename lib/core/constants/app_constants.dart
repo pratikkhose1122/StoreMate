@@ -22,24 +22,27 @@ class AppConstants {
   /// Predefined business types matching the backend CHECK constraint.
   static const List<String> businessTypes = [
     'kirana',
-    'electronics',
+    'medical',
     'clothing',
-    'hardware',
-    'pharmacy',
+    'electronics',
     'restaurant',
+    'stationery',
+    'hardware',
     'general',
     'other',
   ];
 
   /// Human-readable labels for business types.
   static const Map<String, String> businessTypeLabels = {
-    'general': 'General Store (Kirana)',
-    'electronics': 'Electronics & Mobile',
-    'clothing': 'Clothing & Apparel',
-    'hardware': 'Hardware & Tools',
-    'pharmacy': 'Pharmacy / Medical',
-    'fmcg': 'FMCG Distributor',
-    'other': 'Other Business',
+    'kirana': 'Kirana',
+    'medical': 'Medical',
+    'clothing': 'Clothing',
+    'electronics': 'Electronics',
+    'restaurant': 'Restaurant',
+    'stationery': 'Stationery',
+    'hardware': 'Hardware',
+    'general': 'General Store',
+    'other': 'Other',
   };
 
   // Phase 2: Product & Inventory Constants

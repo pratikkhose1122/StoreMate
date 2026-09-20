@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:storemate/core/network/dio_client.dart';
 import 'package:storemate/core/providers/core_providers.dart';
 import 'package:storemate/features/sales/data/datasources/sales_remote_datasource.dart';
 import 'package:storemate/features/sales/data/models/sale_model.dart';
@@ -28,6 +27,7 @@ class SalesHistoryNotifier extends StateNotifier<AsyncValue<List<SaleModel>>> {
     String? customerId,
     String? startDate,
     String? endDate,
+    String? searchText,
     bool refresh = false,
   }) async {
     if (refresh) state = const AsyncValue.loading();
@@ -38,6 +38,7 @@ class SalesHistoryNotifier extends StateNotifier<AsyncValue<List<SaleModel>>> {
         customerId: customerId,
         startDate: startDate,
         endDate: endDate,
+        searchText: searchText,
       );
       state = AsyncValue.data(result['data'] as List<SaleModel>);
     } catch (e, st) {
@@ -49,4 +50,8 @@ class SalesHistoryNotifier extends StateNotifier<AsyncValue<List<SaleModel>>> {
 final salesHistoryProvider = StateNotifierProvider<SalesHistoryNotifier, AsyncValue<List<SaleModel>>>((ref) {
   final repository = ref.watch(salesRepositoryProvider);
   return SalesHistoryNotifier(repository);
+});
+
+final saleDetailsProvider = FutureProvider.family<SaleModel, String>((ref, id) async {
+  return ref.watch(salesRepositoryProvider).getSale(id);
 });

@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -27,6 +28,8 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
+    const logger = new Logger('AuthController');
+    logger.log('Request reached POST /auth/login controller');
     return this.authService.login(loginDto);
   }
 
@@ -57,5 +60,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser() user: JwtPayload) {
     return { message: 'Logged out successfully', userId: user.sub };
+  }
+
+  @Get('debug/firebase')
+  getFirebaseDebug() {
+    return this.authService.getFirebaseDebug();
   }
 }

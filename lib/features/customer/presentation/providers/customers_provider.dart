@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:storemate/core/network/dio_client.dart';
 import 'package:storemate/core/providers/core_providers.dart';
 import 'package:storemate/features/customer/data/datasources/customer_remote_datasource.dart';
 import 'package:storemate/features/customer/data/models/customer_model.dart';

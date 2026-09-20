@@ -7,6 +7,7 @@ import 'package:storemate/features/auth/data/datasources/firebase_auth_datasourc
 import 'package:storemate/features/auth/data/models/auth_response.dart';
 import 'package:storemate/features/auth/data/models/user_model.dart';
 import 'package:storemate/features/shop/data/models/shop_model.dart';
+import 'dart:convert';
 
 /// Repository coordinating Firebase Auth and backend API for authentication.
 ///
@@ -28,6 +29,15 @@ class AuthRepository {
   })  : _firebaseDatasource = firebaseDatasource,
         _remoteDatasource = remoteDatasource,
         _storage = storage;
+
+  Future<void> _cacheProfile(UserModel user, ShopModel? shop) async {
+    await _storage.write('cached_user', jsonEncode(user.toJson()));
+    if (shop != null) {
+      await _storage.write('cached_shop', jsonEncode(shop.toJson()));
+    } else {
+      await _storage.delete('cached_shop');
+    }
+  }
 
   /// Send OTP to the phone number via Firebase.
   Future<void> sendOtp({
@@ -56,11 +66,12 @@ class AuthRepository {
     // Step 2: Send Firebase token to backend
     final authResponse = await _remoteDatasource.login(firebaseToken);
 
-    // Step 3: Store JWT
+    // Step 3: Store JWT and cache profile
     await _storage.write(
       AppConstants.storageKeyAccessToken,
       authResponse.accessToken,
     );
+    await _cacheProfile(authResponse.user, authResponse.shop);
 
     debugPrint('AuthRepository: Login successful, token stored');
     return authResponse;
@@ -77,8 +88,31 @@ class AuthRepository {
       AppConstants.storageKeyAccessToken,
       authResponse.accessToken,
     );
+    await _cacheProfile(authResponse.user, authResponse.shop);
 
     return authResponse;
+  }
+
+  bool _isTokenExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final resp = utf8.decode(base64Url.decode(normalized));
+      final payloadMap = json.decode(resp);
+      
+      if (payloadMap.containsKey('exp')) {
+        final exp = payloadMap['exp'] as int;
+        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        // Expired if current time is past expiration, or within 5 minutes of it
+        return now >= (exp - 300);
+      }
+      return false;
+    } catch (e) {
+      return true; // If we can't parse it, consider it expired
+    }
   }
 
   /// Check if there is a stored session and validate it.
@@ -86,13 +120,13 @@ class AuthRepository {
   /// Used on app startup (splash screen) to determine initial navigation.
   /// Returns a tuple of (user, shop, onboardingRequired) if session is valid.
   Future<({UserModel user, ShopModel? shop, bool onboardingRequired})?> restoreSession() async {
-    debugPrint('Secure storage read start');
+    debugPrint('Storage Start: ${DateTime.now().toIso8601String()}');
     String? token;
     try {
-      token = await _storage.read(AppConstants.storageKeyAccessToken);
-      debugPrint('Secure storage read success');
+      token = await _storage.read(AppConstants.storageKeyAccessToken).timeout(const Duration(seconds: 10));
+      debugPrint('Storage Complete: ${DateTime.now().toIso8601String()}');
     } catch (e) {
-      debugPrint('Secure storage read exception: $e');
+      debugPrint('Secure storage read exception/timeout: $e');
       return null;
     }
 
@@ -103,11 +137,31 @@ class AuthRepository {
 
     try {
       debugPrint('JWT validation start');
+      if (_isTokenExpired(token)) {
+        debugPrint('Token is expired, minting new token via auth-bridge');
+        var currentUser = FirebaseAuth.instance.currentUser;
+        currentUser ??= await FirebaseAuth.instance.authStateChanges().first;
+        if (currentUser != null) {
+          final firebaseToken = await currentUser.getIdToken(true);
+          if (firebaseToken != null) {
+            token = await _remoteDatasource.mintCustomToken(firebaseToken);
+            await _storage.write(AppConstants.storageKeyAccessToken, token);
+          } else {
+             throw Exception('Failed to get fresh Firebase token');
+          }
+        } else {
+           throw Exception('Firebase user is null');
+        }
+      }
+
       debugPrint('Profile request start');
-      final profile = await _remoteDatasource.getProfile();
+      final profile = await _remoteDatasource.getProfile(token);
       debugPrint('Profile request success');
       debugPrint('JWT validation success');
       debugPrint('AuthRepository: Session restored for user ${profile.user.id}');
+      
+      await _cacheProfile(profile.user, profile.shop);
+      
       return (
         user: profile.user,
         shop: profile.shop,
@@ -117,8 +171,37 @@ class AuthRepository {
       debugPrint('Profile request exception: $e');
       debugPrint('JWT validation exception: $e');
       debugPrint('AuthRepository: Session restore failed — $e');
-      // Token is invalid or expired, clear it
-      await _storage.delete(AppConstants.storageKeyAccessToken);
+      
+      // Only delete token if it's explicitly an auth error (e.g. expired or invalid)
+      if (e.toString().contains('JWT') || e.toString().contains('AuthException') || e.toString().contains('401')) {
+        await _storage.delete(AppConstants.storageKeyAccessToken);
+        await _storage.delete('cached_user');
+        await _storage.delete('cached_shop');
+        return null;
+      }
+      
+      // Fallback to cached profile
+      try {
+        final cachedUserStr = await _storage.read('cached_user');
+        final cachedShopStr = await _storage.read('cached_shop');
+        
+        if (cachedUserStr != null) {
+          final user = UserModel.fromJson(jsonDecode(cachedUserStr));
+          ShopModel? shop;
+          if (cachedShopStr != null) {
+            shop = ShopModel.fromJson(jsonDecode(cachedShopStr));
+          }
+          debugPrint('AuthRepository: Restored from offline cache');
+          return (
+            user: user,
+            shop: shop,
+            onboardingRequired: shop == null,
+          );
+        }
+      } catch (cacheErr) {
+        debugPrint('AuthRepository: Cache read failed: $cacheErr');
+      }
+      
       return null;
     }
   }

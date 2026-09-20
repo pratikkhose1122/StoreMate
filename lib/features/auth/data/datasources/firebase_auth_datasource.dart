@@ -53,7 +53,7 @@ class FirebaseAuthDatasource {
 
       // Called on error
       verificationFailed: (FirebaseAuthException e) {
-        debugPrint('FirebaseAuth: Verification failed - ${e.message}');
+        debugPrint('FirebaseAuth: verificationFailed Triggered - Code: ${e.code}, Message: ${e.message}');
         String message;
         switch (e.code) {
           case 'invalid-phone-number':
@@ -64,6 +64,12 @@ class FirebaseAuthDatasource {
             break;
           case 'quota-exceeded':
             message = 'SMS quota exceeded. Please try again later.';
+            break;
+          case 'app-not-authorized':
+            message = 'App verification failed. Ensure SHA fingerprints are added.';
+            break;
+          case 'operation-not-allowed':
+            message = 'Phone auth is disabled in Firebase console.';
             break;
           default:
             message = e.message ?? 'Verification failed. Please try again.';

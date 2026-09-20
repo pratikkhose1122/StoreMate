@@ -9,10 +9,6 @@ import 'package:storemate/features/auth/domain/auth_state.dart';
 import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
 import 'package:storemate/shared/widgets/custom_button.dart';
 
-/// Login screen with Indian mobile number input.
-///
-/// Validates the phone number (10 digits starting with 6-9)
-/// and sends OTP via Firebase Phone Auth.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -56,7 +52,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Navigate to OTP screen when OTP is sent
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isOtpSent && !(previous?.isOtpSent ?? false)) {
         context.push('/otp', extra: _phoneController.text.trim());
@@ -65,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.danger,
           ),
         );
         ref.read(authProvider.notifier).clearError();
@@ -73,6 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -86,27 +82,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  color: context.colors.primary,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.storefront_rounded,
                   size: 36,
-                  color: Colors.white,
+                  color: context.colors.primaryForeground,
                 ),
               ),
               const SizedBox(height: 24),
 
-              Text('Welcome to', style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+              Text('Welcome to', style: AppTextStyles.bodyLg.copyWith(
+                color: context.colors.textSecondary,
               )),
               const SizedBox(height: 4),
-              Text(AppConstants.appName, style: AppTextStyles.h1),
+              Text(AppConstants.appName, style: AppTextStyles.h1.copyWith(color: context.colors.textPrimary)),
               const SizedBox(height: 8),
               Text(
                 'Enter your mobile number to get started.\nWe\'ll send you a verification code.',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                style: AppTextStyles.bodyMd.copyWith(
+                  color: context.colors.textSecondary,
                   height: 1.6,
                 ),
               ),
@@ -119,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Mobile Number', style: AppTextStyles.labelLarge),
+                    Text('Mobile Number', style: AppTextStyles.labelLg.copyWith(color: context.colors.textPrimary)),
                     const SizedBox(height: 8),
 
                     TextFormField(
@@ -132,21 +128,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
                       ],
-                      style: AppTextStyles.bodyLarge.copyWith(
+                      style: AppTextStyles.bodyLg.copyWith(
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.5,
                       ),
                       decoration: InputDecoration(
                         hintText: '9876543210',
+                        hintStyle: TextStyle(color: context.colors.textSecondary.withValues(alpha: 0.5)),
                         counterText: '',
+                        filled: true,
+                        fillColor: context.colors.card,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.colors.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.colors.border)),
                         prefixIcon: Container(
                           width: 72,
                           alignment: Alignment.center,
                           child: Text(
                             '${AppConstants.countryCode}  ',
-                            style: AppTextStyles.bodyLarge.copyWith(
+                            style: AppTextStyles.bodyLg.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: context.colors.textPrimary,
                             ),
                           ),
                         ),
@@ -163,7 +165,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               const SizedBox(height: 32),
 
-              // Send OTP Button
               CustomButton(
                 text: 'Send OTP',
                 onPressed: _onSendOtp,
@@ -172,12 +173,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // Terms Text
               Center(
                 child: Text(
                   'By continuing, you agree to our\nTerms of Service and Privacy Policy',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.caption.copyWith(height: 1.6),
+                  style: AppTextStyles.labelSm.copyWith(height: 1.6, color: context.colors.textSecondary),
                 ),
               ),
 

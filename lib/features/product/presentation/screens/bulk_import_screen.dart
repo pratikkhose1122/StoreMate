@@ -44,6 +44,14 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
       setState(() {
         _previewData = preview;
       });
+    } on UnimplementedError catch (e) {
+      if (mounted) {
+        setState(() => _selectedFilePath = null); // reset to hide preview area
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.message ?? 'Bulk Import is currently unavailable.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -223,7 +231,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
     if (items.isEmpty) return const Center(child: Text('None'));
     return ListView.separated(
       itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(),
+      separatorBuilder: (a, b) => const Divider(),
       itemBuilder: (context, index) => itemBuilder(items[index]),
     );
   }

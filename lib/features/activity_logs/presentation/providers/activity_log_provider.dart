@@ -12,8 +12,9 @@ class ActivityLogRepository {
   Future<List<ActivityLogModel>> getRecentActivity({int limit = 10}) async {
     try {
       final response = await _apiClient.get('/activity-logs/recent', queryParameters: {'limit': limit});
-      final data = response.data as List;
-      return data.map((json) => ActivityLogModel.fromJson(json)).toList();
+      final responseData = response.data;
+      final data = (responseData is Map && responseData.containsKey('data')) ? responseData['data'] : responseData;
+      return (data as List).map((json) => ActivityLogModel.fromJson(json)).toList();
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Failed to load activity logs');
     }

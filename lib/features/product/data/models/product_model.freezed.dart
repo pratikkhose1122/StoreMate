@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProductModel {
 
- String get id;@JsonKey(name: 'shop_id') String get shopId;@JsonKey(name: 'category_id') String? get categoryId; CategoryModel? get category; String get name; String? get description; String? get sku; String? get barcode;@JsonKey(name: 'image_url') String? get imageUrl;@JsonKey(name: 'purchase_price') double get purchasePrice;@JsonKey(name: 'selling_price') double get sellingPrice; int get quantity;@JsonKey(name: 'low_stock_threshold') int get lowStockThreshold;@JsonKey(name: 'unit_type') String get unitType; String get status;@JsonKey(name: 'tax_percentage', defaultValue: 0) double get taxPercentage;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt;
+ String get id; String get shopId; String? get categoryId; CategoryModel? get category; String get name; String? get description; String? get sku; String? get barcode; String? get imageUrl; String? get brand; String? get packageSize;@DecimalConverter() Decimal get purchasePrice;@DecimalConverter() Decimal get sellingPrice;@DecimalConverter() Decimal get quantity;@DecimalConverter() Decimal get lowStockThreshold; String get unitType; String get status;@DecimalConverter() Decimal get taxPercentage; DateTime get createdAt; DateTime get updatedAt;
 /// Create a copy of ProductModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ProductModelCopyWith<ProductModel> get copyWith => _$ProductModelCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.status, status) || other.status == status)&&(identical(other.taxPercentage, taxPercentage) || other.taxPercentage == taxPercentage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.packageSize, packageSize) || other.packageSize == packageSize)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.status, status) || other.status == status)&&(identical(other.taxPercentage, taxPercentage) || other.taxPercentage == taxPercentage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,categoryId,category,name,description,sku,barcode,imageUrl,purchasePrice,sellingPrice,quantity,lowStockThreshold,unitType,status,taxPercentage,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,shopId,categoryId,category,name,description,sku,barcode,imageUrl,brand,packageSize,purchasePrice,sellingPrice,quantity,lowStockThreshold,unitType,status,taxPercentage,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'ProductModel(id: $id, shopId: $shopId, categoryId: $categoryId, category: $category, name: $name, description: $description, sku: $sku, barcode: $barcode, imageUrl: $imageUrl, purchasePrice: $purchasePrice, sellingPrice: $sellingPrice, quantity: $quantity, lowStockThreshold: $lowStockThreshold, unitType: $unitType, status: $status, taxPercentage: $taxPercentage, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ProductModel(id: $id, shopId: $shopId, categoryId: $categoryId, category: $category, name: $name, description: $description, sku: $sku, barcode: $barcode, imageUrl: $imageUrl, brand: $brand, packageSize: $packageSize, purchasePrice: $purchasePrice, sellingPrice: $sellingPrice, quantity: $quantity, lowStockThreshold: $lowStockThreshold, unitType: $unitType, status: $status, taxPercentage: $taxPercentage, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ProductModelCopyWith<$Res>  {
   factory $ProductModelCopyWith(ProductModel value, $Res Function(ProductModel) _then) = _$ProductModelCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'shop_id') String shopId,@JsonKey(name: 'category_id') String? categoryId, CategoryModel? category, String name, String? description, String? sku, String? barcode,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'purchase_price') double purchasePrice,@JsonKey(name: 'selling_price') double sellingPrice, int quantity,@JsonKey(name: 'low_stock_threshold') int lowStockThreshold,@JsonKey(name: 'unit_type') String unitType, String status,@JsonKey(name: 'tax_percentage', defaultValue: 0) double taxPercentage,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
+ String id, String shopId, String? categoryId, CategoryModel? category, String name, String? description, String? sku, String? barcode, String? imageUrl, String? brand, String? packageSize,@DecimalConverter() Decimal purchasePrice,@DecimalConverter() Decimal sellingPrice,@DecimalConverter() Decimal quantity,@DecimalConverter() Decimal lowStockThreshold, String unitType, String status,@DecimalConverter() Decimal taxPercentage, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$ProductModelCopyWithImpl<$Res>
 
 /// Create a copy of ProductModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? categoryId = freezed,Object? category = freezed,Object? name = null,Object? description = freezed,Object? sku = freezed,Object? barcode = freezed,Object? imageUrl = freezed,Object? purchasePrice = null,Object? sellingPrice = null,Object? quantity = null,Object? lowStockThreshold = null,Object? unitType = null,Object? status = null,Object? taxPercentage = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? shopId = null,Object? categoryId = freezed,Object? category = freezed,Object? name = null,Object? description = freezed,Object? sku = freezed,Object? barcode = freezed,Object? imageUrl = freezed,Object? brand = freezed,Object? packageSize = freezed,Object? purchasePrice = null,Object? sellingPrice = null,Object? quantity = null,Object? lowStockThreshold = null,Object? unitType = null,Object? status = null,Object? taxPercentage = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -76,14 +76,16 @@ as String,description: freezed == description ? _self.description : description 
 as String?,sku: freezed == sku ? _self.sku : sku // ignore: cast_nullable_to_non_nullable
 as String?,barcode: freezed == barcode ? _self.barcode : barcode // ignore: cast_nullable_to_non_nullable
 as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String?,brand: freezed == brand ? _self.brand : brand // ignore: cast_nullable_to_non_nullable
+as String?,packageSize: freezed == packageSize ? _self.packageSize : packageSize // ignore: cast_nullable_to_non_nullable
 as String?,purchasePrice: null == purchasePrice ? _self.purchasePrice : purchasePrice // ignore: cast_nullable_to_non_nullable
-as double,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
-as double,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as int,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable
-as int,unitType: null == unitType ? _self.unitType : unitType // ignore: cast_nullable_to_non_nullable
+as Decimal,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
+as Decimal,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
+as Decimal,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable
+as Decimal,unitType: null == unitType ? _self.unitType : unitType // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,taxPercentage: null == taxPercentage ? _self.taxPercentage : taxPercentage // ignore: cast_nullable_to_non_nullable
-as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as Decimal,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
@@ -182,10 +184,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'shop_id')  String shopId, @JsonKey(name: 'category_id')  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'purchase_price')  double purchasePrice, @JsonKey(name: 'selling_price')  double sellingPrice,  int quantity, @JsonKey(name: 'low_stock_threshold')  int lowStockThreshold, @JsonKey(name: 'unit_type')  String unitType,  String status, @JsonKey(name: 'tax_percentage', defaultValue: 0)  double taxPercentage, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String shopId,  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode,  String? imageUrl,  String? brand,  String? packageSize, @DecimalConverter()  Decimal purchasePrice, @DecimalConverter()  Decimal sellingPrice, @DecimalConverter()  Decimal quantity, @DecimalConverter()  Decimal lowStockThreshold,  String unitType,  String status, @DecimalConverter()  Decimal taxPercentage,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ProductModel() when $default != null:
-return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.brand,_that.packageSize,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -203,10 +205,10 @@ return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'shop_id')  String shopId, @JsonKey(name: 'category_id')  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'purchase_price')  double purchasePrice, @JsonKey(name: 'selling_price')  double sellingPrice,  int quantity, @JsonKey(name: 'low_stock_threshold')  int lowStockThreshold, @JsonKey(name: 'unit_type')  String unitType,  String status, @JsonKey(name: 'tax_percentage', defaultValue: 0)  double taxPercentage, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String shopId,  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode,  String? imageUrl,  String? brand,  String? packageSize, @DecimalConverter()  Decimal purchasePrice, @DecimalConverter()  Decimal sellingPrice, @DecimalConverter()  Decimal quantity, @DecimalConverter()  Decimal lowStockThreshold,  String unitType,  String status, @DecimalConverter()  Decimal taxPercentage,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _ProductModel():
-return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.brand,_that.packageSize,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -223,10 +225,10 @@ return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'shop_id')  String shopId, @JsonKey(name: 'category_id')  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'purchase_price')  double purchasePrice, @JsonKey(name: 'selling_price')  double sellingPrice,  int quantity, @JsonKey(name: 'low_stock_threshold')  int lowStockThreshold, @JsonKey(name: 'unit_type')  String unitType,  String status, @JsonKey(name: 'tax_percentage', defaultValue: 0)  double taxPercentage, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String shopId,  String? categoryId,  CategoryModel? category,  String name,  String? description,  String? sku,  String? barcode,  String? imageUrl,  String? brand,  String? packageSize, @DecimalConverter()  Decimal purchasePrice, @DecimalConverter()  Decimal sellingPrice, @DecimalConverter()  Decimal quantity, @DecimalConverter()  Decimal lowStockThreshold,  String unitType,  String status, @DecimalConverter()  Decimal taxPercentage,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ProductModel() when $default != null:
-return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name,_that.description,_that.sku,_that.barcode,_that.imageUrl,_that.brand,_that.packageSize,_that.purchasePrice,_that.sellingPrice,_that.quantity,_that.lowStockThreshold,_that.unitType,_that.status,_that.taxPercentage,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -238,27 +240,29 @@ return $default(_that.id,_that.shopId,_that.categoryId,_that.category,_that.name
 @JsonSerializable()
 
 class _ProductModel implements ProductModel {
-  const _ProductModel({required this.id, @JsonKey(name: 'shop_id') required this.shopId, @JsonKey(name: 'category_id') this.categoryId, this.category, required this.name, this.description, this.sku, this.barcode, @JsonKey(name: 'image_url') this.imageUrl, @JsonKey(name: 'purchase_price') required this.purchasePrice, @JsonKey(name: 'selling_price') required this.sellingPrice, required this.quantity, @JsonKey(name: 'low_stock_threshold') required this.lowStockThreshold, @JsonKey(name: 'unit_type') required this.unitType, required this.status, @JsonKey(name: 'tax_percentage', defaultValue: 0) required this.taxPercentage, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt});
+  const _ProductModel({required this.id, required this.shopId, this.categoryId, this.category, required this.name, this.description, this.sku, this.barcode, this.imageUrl, this.brand, this.packageSize, @DecimalConverter() required this.purchasePrice, @DecimalConverter() required this.sellingPrice, @DecimalConverter() required this.quantity, @DecimalConverter() required this.lowStockThreshold, required this.unitType, required this.status, @DecimalConverter() required this.taxPercentage, required this.createdAt, required this.updatedAt});
   factory _ProductModel.fromJson(Map<String, dynamic> json) => _$ProductModelFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'shop_id') final  String shopId;
-@override@JsonKey(name: 'category_id') final  String? categoryId;
+@override final  String shopId;
+@override final  String? categoryId;
 @override final  CategoryModel? category;
 @override final  String name;
 @override final  String? description;
 @override final  String? sku;
 @override final  String? barcode;
-@override@JsonKey(name: 'image_url') final  String? imageUrl;
-@override@JsonKey(name: 'purchase_price') final  double purchasePrice;
-@override@JsonKey(name: 'selling_price') final  double sellingPrice;
-@override final  int quantity;
-@override@JsonKey(name: 'low_stock_threshold') final  int lowStockThreshold;
-@override@JsonKey(name: 'unit_type') final  String unitType;
+@override final  String? imageUrl;
+@override final  String? brand;
+@override final  String? packageSize;
+@override@DecimalConverter() final  Decimal purchasePrice;
+@override@DecimalConverter() final  Decimal sellingPrice;
+@override@DecimalConverter() final  Decimal quantity;
+@override@DecimalConverter() final  Decimal lowStockThreshold;
+@override final  String unitType;
 @override final  String status;
-@override@JsonKey(name: 'tax_percentage', defaultValue: 0) final  double taxPercentage;
-@override@JsonKey(name: 'created_at') final  DateTime createdAt;
-@override@JsonKey(name: 'updated_at') final  DateTime updatedAt;
+@override@DecimalConverter() final  Decimal taxPercentage;
+@override final  DateTime createdAt;
+@override final  DateTime updatedAt;
 
 /// Create a copy of ProductModel
 /// with the given fields replaced by the non-null parameter values.
@@ -273,16 +277,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.status, status) || other.status == status)&&(identical(other.taxPercentage, taxPercentage) || other.taxPercentage == taxPercentage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ProductModel&&(identical(other.id, id) || other.id == id)&&(identical(other.shopId, shopId) || other.shopId == shopId)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.category, category) || other.category == category)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.sku, sku) || other.sku == sku)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.brand, brand) || other.brand == brand)&&(identical(other.packageSize, packageSize) || other.packageSize == packageSize)&&(identical(other.purchasePrice, purchasePrice) || other.purchasePrice == purchasePrice)&&(identical(other.sellingPrice, sellingPrice) || other.sellingPrice == sellingPrice)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.lowStockThreshold, lowStockThreshold) || other.lowStockThreshold == lowStockThreshold)&&(identical(other.unitType, unitType) || other.unitType == unitType)&&(identical(other.status, status) || other.status == status)&&(identical(other.taxPercentage, taxPercentage) || other.taxPercentage == taxPercentage)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,shopId,categoryId,category,name,description,sku,barcode,imageUrl,purchasePrice,sellingPrice,quantity,lowStockThreshold,unitType,status,taxPercentage,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,shopId,categoryId,category,name,description,sku,barcode,imageUrl,brand,packageSize,purchasePrice,sellingPrice,quantity,lowStockThreshold,unitType,status,taxPercentage,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'ProductModel(id: $id, shopId: $shopId, categoryId: $categoryId, category: $category, name: $name, description: $description, sku: $sku, barcode: $barcode, imageUrl: $imageUrl, purchasePrice: $purchasePrice, sellingPrice: $sellingPrice, quantity: $quantity, lowStockThreshold: $lowStockThreshold, unitType: $unitType, status: $status, taxPercentage: $taxPercentage, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ProductModel(id: $id, shopId: $shopId, categoryId: $categoryId, category: $category, name: $name, description: $description, sku: $sku, barcode: $barcode, imageUrl: $imageUrl, brand: $brand, packageSize: $packageSize, purchasePrice: $purchasePrice, sellingPrice: $sellingPrice, quantity: $quantity, lowStockThreshold: $lowStockThreshold, unitType: $unitType, status: $status, taxPercentage: $taxPercentage, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -293,7 +297,7 @@ abstract mixin class _$ProductModelCopyWith<$Res> implements $ProductModelCopyWi
   factory _$ProductModelCopyWith(_ProductModel value, $Res Function(_ProductModel) _then) = __$ProductModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'shop_id') String shopId,@JsonKey(name: 'category_id') String? categoryId, CategoryModel? category, String name, String? description, String? sku, String? barcode,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'purchase_price') double purchasePrice,@JsonKey(name: 'selling_price') double sellingPrice, int quantity,@JsonKey(name: 'low_stock_threshold') int lowStockThreshold,@JsonKey(name: 'unit_type') String unitType, String status,@JsonKey(name: 'tax_percentage', defaultValue: 0) double taxPercentage,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
+ String id, String shopId, String? categoryId, CategoryModel? category, String name, String? description, String? sku, String? barcode, String? imageUrl, String? brand, String? packageSize,@DecimalConverter() Decimal purchasePrice,@DecimalConverter() Decimal sellingPrice,@DecimalConverter() Decimal quantity,@DecimalConverter() Decimal lowStockThreshold, String unitType, String status,@DecimalConverter() Decimal taxPercentage, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -310,7 +314,7 @@ class __$ProductModelCopyWithImpl<$Res>
 
 /// Create a copy of ProductModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? categoryId = freezed,Object? category = freezed,Object? name = null,Object? description = freezed,Object? sku = freezed,Object? barcode = freezed,Object? imageUrl = freezed,Object? purchasePrice = null,Object? sellingPrice = null,Object? quantity = null,Object? lowStockThreshold = null,Object? unitType = null,Object? status = null,Object? taxPercentage = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? shopId = null,Object? categoryId = freezed,Object? category = freezed,Object? name = null,Object? description = freezed,Object? sku = freezed,Object? barcode = freezed,Object? imageUrl = freezed,Object? brand = freezed,Object? packageSize = freezed,Object? purchasePrice = null,Object? sellingPrice = null,Object? quantity = null,Object? lowStockThreshold = null,Object? unitType = null,Object? status = null,Object? taxPercentage = null,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_ProductModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,shopId: null == shopId ? _self.shopId : shopId // ignore: cast_nullable_to_non_nullable
@@ -321,14 +325,16 @@ as String,description: freezed == description ? _self.description : description 
 as String?,sku: freezed == sku ? _self.sku : sku // ignore: cast_nullable_to_non_nullable
 as String?,barcode: freezed == barcode ? _self.barcode : barcode // ignore: cast_nullable_to_non_nullable
 as String?,imageUrl: freezed == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
+as String?,brand: freezed == brand ? _self.brand : brand // ignore: cast_nullable_to_non_nullable
+as String?,packageSize: freezed == packageSize ? _self.packageSize : packageSize // ignore: cast_nullable_to_non_nullable
 as String?,purchasePrice: null == purchasePrice ? _self.purchasePrice : purchasePrice // ignore: cast_nullable_to_non_nullable
-as double,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
-as double,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
-as int,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable
-as int,unitType: null == unitType ? _self.unitType : unitType // ignore: cast_nullable_to_non_nullable
+as Decimal,sellingPrice: null == sellingPrice ? _self.sellingPrice : sellingPrice // ignore: cast_nullable_to_non_nullable
+as Decimal,quantity: null == quantity ? _self.quantity : quantity // ignore: cast_nullable_to_non_nullable
+as Decimal,lowStockThreshold: null == lowStockThreshold ? _self.lowStockThreshold : lowStockThreshold // ignore: cast_nullable_to_non_nullable
+as Decimal,unitType: null == unitType ? _self.unitType : unitType // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,taxPercentage: null == taxPercentage ? _self.taxPercentage : taxPercentage // ignore: cast_nullable_to_non_nullable
-as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as Decimal,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));

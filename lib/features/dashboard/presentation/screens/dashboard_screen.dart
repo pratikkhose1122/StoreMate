@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:storemate/core/constants/app_colors.dart';
-import 'package:storemate/core/constants/app_constants.dart';
 import 'package:storemate/core/constants/app_text_styles.dart';
 import 'package:storemate/features/auth/domain/auth_state.dart';
 import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
 import 'package:storemate/features/dashboard/data/repositories/dashboard_repository.dart';
-import 'package:storemate/core/utils/permission_utils.dart';
 import 'package:storemate/features/activity_logs/presentation/providers/activity_log_provider.dart';
+import 'package:storemate/core/permissions/permission_provider.dart';
+import 'package:storemate/core/widgets/app_empty_state.dart';
+import 'package:decimal/decimal.dart';
+import 'package:storemate/core/widgets/app_shimmer.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class DashboardScreen extends ConsumerWidget {
@@ -17,8 +19,8 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final colors = context.colors;
 
-    // Listen for logout
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.unauthenticated) {
         context.go('/login');
@@ -28,392 +30,529 @@ class DashboardScreen extends ConsumerWidget {
     final shop = authState.shop;
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final activityAsync = ref.watch(recentActivityProvider);
+    final permissions = ref.watch(permissionServiceProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(shop?.name ?? AppConstants.appName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Logout',
-            onPressed: () => _showLogoutDialog(context, ref),
-          ),
-        ],
+      backgroundColor: colors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
+        onPressed: () => context.push('/pos'),
+        backgroundColor: colors.primary,
+        foregroundColor: colors.primaryForeground,
+        elevation: 0,
+        icon: const Icon(Icons.add, size: 20),
+        label: Text('New Sale', style: AppTextStyles.btnMd.copyWith(color: colors.primaryForeground)),
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => ref.refresh(dashboardSummaryProvider.future),
-          child: SingleChildScrollView(
+          onRefresh: () async {
+            ref.invalidate(dashboardSummaryProvider);
+            ref.invalidate(recentActivityProvider);
+            await ref.read(dashboardSummaryProvider.future);
+          },
+          color: colors.primary,
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            slivers: [
+              // ── Header ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              shop?.name ?? 'My Shop',
+                              style: AppTextStyles.titleSm.copyWith(color: colors.textPrimary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (shop?.businessType != null)
+                              Text(
+                                shop!.businessType.toUpperCase(),
+                                style: AppTextStyles.labelSm.copyWith(
+                                  color: colors.textTertiary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (permissions.canAccessSettings)
+                        GestureDetector(
+                          onTap: () => context.push('/settings'),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
+                              color: colors.card,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: colors.border),
                             ),
-                            child: Text(
-                              shop?.shopCode ?? '',
-                              style: AppTextStyles.labelMedium.copyWith(color: Colors.white),
-                            ),
+                            child: Icon(Icons.settings_outlined, size: 20, color: colors.textSecondary),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Welcome back, ${shop?.ownerName ?? "Owner"}',
-                        style: AppTextStyles.h2.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        shop?.name ?? '',
-                        style: AppTextStyles.bodyMedium.copyWith(color: Colors.white.withValues(alpha: 0.8)),
-                      ),
+                        ),
                     ],
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 28),
+              // ── Today's Overview ──
+              summaryAsync.when(
+                data: (summary) {
+                  final numBills = summary.todaysTransactionCount;
+                  final avgBill = numBills > 0 ? (summary.todaysSales / Decimal.fromInt(numBills)).toDecimal(scaleOnInfinitePrecision: 2) : Decimal.zero;
 
-                // Quick Actions Grid
-                Text('Quick Actions', style: AppTextStyles.h4),
-                const SizedBox(height: 12),
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.9,
-                  children: [
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.POS_CHECKOUT))
-                      _buildModuleCard(
-                        context,
-                        Icons.point_of_sale,
-                        'POS',
-                        'New Sale',
-                        Colors.green,
-                        onTap: () => context.push('/pos'),
+                  return SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Metric Grid 2x2
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _MetricTile(
+                                    label: 'Revenue',
+                                    value: '₹${summary.todaysSales.toDouble().toStringAsFixed(0)}',
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _MetricTile(
+                                    label: 'Bills',
+                                    value: '$numBills',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _MetricTile(
+                                    label: 'Profit',
+                                    value: '₹${summary.todaysProfit.toDouble().toStringAsFixed(0)}',
+                                    valueColor: summary.todaysProfit > Decimal.zero ? colors.success : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _MetricTile(
+                                    label: 'Avg Bill',
+                                    value: '₹${avgBill.toDouble().toStringAsFixed(0)}',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.MANAGE_PRODUCTS))
-                      _buildModuleCard(
-                        context,
-                        Icons.inventory_2_outlined,
-                        'Products',
-                        'Manage catalog',
-                        AppColors.primary,
-                        onTap: () => context.push('/products'),
-                      ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.MANAGE_CUSTOMERS))
-                      _buildModuleCard(
-                        context,
-                        Icons.people_outline,
-                        'Customers',
-                        'Manage users',
-                        Colors.orange,
-                        onTap: () => context.push('/customers'),
-                      ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.MANAGE_PRODUCTS))
-                      _buildModuleCard(
-                        context,
-                        Icons.category_outlined,
-                        'Categories',
-                        'Organize items',
-                        Colors.purple,
-                        onTap: () => context.push('/categories'),
-                      ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.VIEW_REPORTS))
-                      _buildModuleCard(
-                        context,
-                        Icons.receipt_long_outlined,
-                        'Sales History',
-                        'View invoices',
-                        Colors.blue,
-                        onTap: () => context.push('/sales'),
-                      ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.MANAGE_STAFF))
-                      _buildModuleCard(
-                        context,
-                        Icons.manage_accounts,
-                        'Staff',
-                        'Manage team',
-                        Colors.teal,
-                        onTap: () => context.push('/staff'),
-                      ),
-                    if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.VIEW_REPORTS))
-                      _buildModuleCard(
-                        context,
-                        Icons.bar_chart,
-                        'Reports',
-                        'View analytics',
-                        Colors.red,
-                        onTap: () => context.push('/reports'),
-                      ),
-                  ],
-                ),
 
-                const SizedBox(height: 28),
+                      const SizedBox(height: 28),
 
-                // Inventory Summary
-                Text('Inventory Summary', style: AppTextStyles.h4),
-                const SizedBox(height: 12),
-                
-                summaryAsync.when(
-                  data: (summary) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.2,
-                        children: [
-                          _buildMetricCard('Today\'s Sales', '₹${summary.todaysSales.toStringAsFixed(0)}', Icons.monetization_on, Colors.green),
-                          _buildMetricCard('Today\'s Profit', '₹${summary.todaysProfit.toStringAsFixed(0)}', Icons.trending_up, Colors.blue),
-                          _buildMetricCard('Total Products', summary.totalProducts.toString(), Icons.shopping_bag_outlined, Colors.purple),
-                          _buildMetricCard('Low Stock', summary.lowStockProducts.toString(), Icons.warning_amber_rounded, Colors.orange),
-                        ],
+                      // ── Low Stock Alert ──
+                      if (summary.lowStockProductsList.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _LowStockBanner(
+                            count: summary.lowStockProductsList.length,
+                            products: summary.lowStockProductsList,
+                            onViewAll: () => context.go('/products'),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                      ],
+
+                      // ── Top Selling ──
+                      if (summary.recentProducts.isNotEmpty) ...[
+                        _SectionHeader(title: 'Top Selling'),
+                        ...summary.recentProducts.take(5).toList().asMap().entries.map(
+                          (entry) => _TopProductRow(
+                            rank: entry.key + 1,
+                            product: entry.value,
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                      ],
+
+                      // ── Business Health ──
+                      _SectionHeader(title: 'Stock Health'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _HealthStat(
+                                label: 'In Stock',
+                                value: '${summary.totalProducts}',
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            Container(width: 1, height: 32, color: colors.border),
+                            Expanded(
+                              child: _HealthStat(
+                                label: 'Low Stock',
+                                value: '${summary.lowStockProducts}',
+                                color: colors.warning,
+                              ),
+                            ),
+                            Container(width: 1, height: 32, color: colors.border),
+                            Expanded(
+                              child: _HealthStat(
+                                label: 'Out',
+                                value: '${summary.outOfStockProducts}',
+                                color: colors.danger,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 28),
-                      
-                      if (summary.lowStockProductsList.isNotEmpty) ...[
-                        Text('Low Stock Alerts', style: AppTextStyles.h4.copyWith(color: AppColors.error)),
-                        const SizedBox(height: 12),
-                        _buildListCard(
-                          summary.lowStockProductsList,
-                          (item) => ListTile(
-                            leading: const Icon(Icons.warning, color: Colors.orange),
-                            title: Text(item['name']),
-                            subtitle: Text('Stock: ${item['quantity']} (Threshold: ${item['lowStockThreshold']})'),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
+                    ]),
+                  );
+                },
+                loading: () => SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Row(children: [
+                          Expanded(child: ShimmerMetricCard()),
+                          const SizedBox(width: 10),
+                          Expanded(child: ShimmerMetricCard()),
+                        ]),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          Expanded(child: ShimmerMetricCard()),
+                          const SizedBox(width: 10),
+                          Expanded(child: ShimmerMetricCard()),
+                        ]),
                       ],
-                      
-                      if (summary.recentMovements.isNotEmpty) ...[
-                        Text('Recent Stock Movements', style: AppTextStyles.h4),
-                        const SizedBox(height: 12),
-                        _buildListCard(
-                          summary.recentMovements,
-                          (item) {
-                            final isAddition = item['quantityChange'] > 0;
-                            return ListTile(
-                              leading: Icon(
-                                isAddition ? Icons.add_circle : Icons.remove_circle,
-                                color: isAddition ? Colors.green : Colors.red,
-                              ),
-                              title: Text(item['product']?['name'] ?? 'Unknown Product'),
-                              subtitle: Text(item['actionType']?.toString().toUpperCase() ?? ''),
-                              trailing: Text(
-                                '${isAddition ? '+' : ''}${item['quantityChange']}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isAddition ? Colors.green : Colors.red,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 28),
-                      ],
-                      
-                      if (PermissionUtils.hasPermission(authState.user?.role, AppPermission.VIEW_REPORTS)) ...[
-                        Text('Recent Staff Activity', style: AppTextStyles.h4),
-                        const SizedBox(height: 12),
-                        activityAsync.when(
-                          data: (logs) {
-                            if (logs.isEmpty) {
-                              return const Card(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Text('No recent activity.'),
-                                ),
-                              );
-                            }
-                            return _buildListCard(
-                              logs,
-                              (log) {
-                                String title = '';
-                                IconData icon = Icons.info_outline;
-                                Color color = Colors.grey;
-
-                                switch (log.action) {
-                                  case 'SALE_CREATED':
-                                    title = '${log.user.name ?? 'Staff'} sold ₹${log.details?['total'] ?? 0}';
-                                    icon = Icons.receipt;
-                                    color = Colors.green;
-                                    break;
-                                  case 'INVENTORY_ADJUSTED':
-                                    title = '${log.user.name ?? 'Staff'} adjusted stock';
-                                    icon = Icons.inventory;
-                                    color = Colors.orange;
-                                    break;
-                                  case 'CUSTOMER_CREATED':
-                                    title = '${log.user.name ?? 'Staff'} added customer';
-                                    icon = Icons.person_add;
-                                    color = Colors.blue;
-                                    break;
-                                  default:
-                                    title = '${log.user.name ?? 'Staff'} performed ${log.action}';
-                                }
-
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: color.withValues(alpha: 0.2),
-                                    child: Icon(icon, color: color, size: 20),
-                                  ),
-                                  title: Text(title, style: AppTextStyles.bodyMedium),
-                                  subtitle: Text(timeago.format(log.createdAt), style: AppTextStyles.caption),
-                                );
-                              },
-                            );
-                          },
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, _) => Text('Error loading activity: $e'),
-                        ),
-                        const SizedBox(height: 28),
-                      ],
-                    ],
+                    ),
                   ),
-                  loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
-                  error: (e, _) => Center(child: Text('Failed to load: $e')),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModuleCard(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String subtitle,
-    Color color,
-    {required VoidCallback onTap}
-  ) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 28, color: color),
-              const SizedBox(height: 12),
-              Text(title, style: AppTextStyles.labelLarge),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: AppTextStyles.caption.copyWith(fontSize: 10),
+                error: (e, _) => SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: AppEmptyState(
+                      icon: Icons.cloud_off,
+                      title: 'Unable to load data',
+                      explanation: 'Check your connection and try again.',
+                      actionLabel: 'Retry',
+                      onAction: () => ref.invalidate(dashboardSummaryProvider),
+                    ),
+                  ),
+                ),
               ),
+
+              // ── Recent Sales ──
+              SliverToBoxAdapter(child: _SectionHeader(title: 'Recent Sales')),
+              activityAsync.when(
+                data: (logs) {
+                  final salesLogs = logs.where((l) => l.action == 'SALE_CREATED').toList();
+                  if (salesLogs.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: AppEmptyState(
+                          icon: Icons.receipt_long_outlined,
+                          title: 'No sales yet',
+                          explanation: 'Start selling to see transactions here.',
+                          actionLabel: 'Make a Sale',
+                          onAction: () => context.push('/pos'),
+                        ),
+                      ),
+                    );
+                  }
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final log = salesLogs[index];
+                        return _SaleRow(
+                          customer: log.details?['customerName'] ?? 'Walk-in',
+                          amount: log.details?['total'] ?? 0,
+                          time: log.createdAt,
+                        );
+                      },
+                      childCount: salesLogs.length > 5 ? 5 : salesLogs.length,
+                    ),
+                  );
+                },
+                loading: () => SliverToBoxAdapter(
+                  child: Column(
+                    children: List.generate(3, (_) => const ShimmerProductRow()),
+                  ),
+                ),
+                error: (e, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
+// ── Section Header ──
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Text(
+        title,
+        style: AppTextStyles.labelMd.copyWith(
+          color: context.colors.textSecondary,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Metric Tile ──
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 24),
-          const Spacer(),
-          Text(value, style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(title, style: AppTextStyles.bodySmall.copyWith(color: Colors.grey[600])),
+          Text(
+            label,
+            style: AppTextStyles.labelSm.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOut,
+            builder: (context, val, child) {
+              return Opacity(
+                opacity: val,
+                child: Text(
+                  value,
+                  style: AppTextStyles.monoLg.copyWith(
+                    color: valueColor ?? colors.textPrimary,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildListCard(List items, Widget Function(dynamic) itemBuilder) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) => itemBuilder(items[index]),
+// ── Low Stock Banner ──
+class _LowStockBanner extends StatelessWidget {
+  final int count;
+  final List<Map<String, dynamic>> products;
+  final VoidCallback onViewAll;
+
+  const _LowStockBanner({
+    required this.count,
+    required this.products,
+    required this.onViewAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return GestureDetector(
+      onTap: onViewAll,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.warning_amber_rounded, size: 18, color: colors.warning),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count products low on stock',
+                    style: AppTextStyles.labelMd.copyWith(color: colors.textPrimary),
+                  ),
+                  Text(
+                    products.take(2).map((p) => p['name'] ?? '').join(', '),
+                    style: AppTextStyles.bodySm.copyWith(color: colors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+          ],
+        ),
       ),
     );
   }
+}
 
-  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Logout', style: AppTextStyles.h3),
-        content: Text(
-          'Are you sure you want to logout?',
-          style: AppTextStyles.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ref.read(authProvider.notifier).logout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              minimumSize: const Size(100, 42),
+// ── Top Product Row ──
+class _TopProductRow extends StatelessWidget {
+  final int rank;
+  final Map<String, dynamic> product;
+
+  const _TopProductRow({required this.rank, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final name = product['name'] ?? 'Unknown';
+    final price = product['sellingPrice'];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text(
+              '$rank',
+              style: AppTextStyles.labelMd.copyWith(color: colors.textTertiary),
             ),
-            child: const Text('Logout'),
+          ),
+          Expanded(
+            child: Text(
+              name,
+              style: AppTextStyles.bodyMd.copyWith(color: colors.textPrimary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (price != null)
+            Text(
+              '₹$price',
+              style: AppTextStyles.monoSm.copyWith(color: colors.textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Health Stat ──
+class _HealthStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _HealthStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.monoMd.copyWith(color: color),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: AppTextStyles.labelSm.copyWith(color: context.colors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Sale Row ──
+class _SaleRow extends StatelessWidget {
+  final String customer;
+  final num amount;
+  final DateTime time;
+
+  const _SaleRow({required this.customer, required this.amount, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colors.elevatedCard,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.receipt_long_outlined, size: 16, color: colors.textSecondary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customer,
+                  style: AppTextStyles.bodyMd.copyWith(color: colors.textPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  timeago.format(time),
+                  style: AppTextStyles.bodySm.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₹${amount.toStringAsFixed(0)}',
+            style: AppTextStyles.monoSm.copyWith(color: colors.textPrimary),
           ),
         ],
       ),

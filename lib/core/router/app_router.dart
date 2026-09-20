@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:storemate/features/auth/domain/auth_state.dart';
 import 'package:storemate/features/auth/data/models/user_model.dart';
 import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
+import 'package:storemate/core/permissions/permission_service.dart';
 import 'package:storemate/features/auth/presentation/screens/splash_screen.dart';
 import 'package:storemate/features/auth/presentation/screens/login_screen.dart';
 import 'package:storemate/features/auth/presentation/screens/otp_screen.dart';
@@ -21,16 +22,20 @@ import 'package:storemate/features/product/presentation/screens/bulk_import_scre
 import 'package:storemate/features/inventory/presentation/screens/stock_in_screen.dart';
 import 'package:storemate/features/customer/presentation/screens/customer_list_screen.dart';
 import 'package:storemate/features/customer/presentation/screens/customer_form_screen.dart';
+import 'package:storemate/features/sales/presentation/screens/invoice_list_screen.dart';
 import 'package:storemate/features/sales/presentation/screens/pos_screen.dart';
-import 'package:storemate/features/sales/presentation/screens/cart_screen.dart';
-import 'package:storemate/features/sales/presentation/screens/checkout_screen.dart';
+import 'package:storemate/features/sales/presentation/screens/sale_success_screen.dart';
 import 'package:storemate/features/sales/presentation/screens/sales_history_screen.dart';
 import 'package:storemate/features/sales/presentation/screens/invoice_details_screen.dart';
+import 'package:storemate/features/sales/presentation/screens/refund_screen.dart';
 import 'package:storemate/features/reports/presentation/screens/reports_screen.dart';
 import 'package:storemate/features/settings/presentation/screens/settings_screen.dart';
 import 'package:storemate/features/settings/presentation/screens/backup_screen.dart';
+import 'package:storemate/features/settings/presentation/screens/printer_settings_screen.dart';
 import 'package:storemate/features/staff/presentation/screens/staff_list_screen.dart';
 import 'package:storemate/features/staff/presentation/screens/add_edit_staff_screen.dart';
+import 'package:storemate/core/layout/main_layout.dart';
+
 /// GoRouter configuration with auth-based redirects.
 ///
 /// Navigation flow:
@@ -40,14 +45,12 @@ import 'package:storemate/features/staff/presentation/screens/add_edit_staff_scr
 ///   /register-shop → submit → /dashboard
 ///   /dashboard → main app
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
-
   return GoRouter(
     initialLocation: '/splash',
     debugLogDiagnostics: true,
     redirect: (BuildContext context, GoRouterState state) {
       final currentPath = state.matchedLocation;
-      final status = authState.status;
+      final status = ref.read(authProvider).status;
 
       // Allow splash screen to always load (handles its own redirect)
       if (currentPath == '/splash') return null;
@@ -66,11 +69,34 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // If authenticated with shop, redirect away from auth screens
       if (status == AuthStatus.authenticated) {
+        final permissions = PermissionService(ref.read(authProvider).user);
+
         if (currentPath == '/login' ||
             currentPath == '/otp' ||
             currentPath == '/register-shop') {
-          return '/dashboard';
+          return permissions.canAccessDashboard ? '/dashboard' : '/invoices';
         }
+
+        // Route guards based on permissions
+        if (currentPath == '/dashboard' && !permissions.canAccessDashboard) {
+          return '/invoices';
+        }
+        if (currentPath.startsWith('/scan') && !permissions.canAccessScan) {
+          return '/invoices';
+        }
+        if ((currentPath.startsWith('/products') || currentPath.startsWith('/stock-in')) && !permissions.canAccessStock) {
+          return '/invoices';
+        }
+        if (currentPath.startsWith('/reports') && !permissions.canAccessReports) {
+          return '/invoices';
+        }
+        if (currentPath.startsWith('/staff') && !permissions.canAccessStaff) {
+          return '/invoices';
+        }
+        if (currentPath.startsWith('/settings') && !permissions.canAccessSettings) {
+          return '/invoices';
+        }
+
         return null;
       }
 
@@ -100,10 +126,137 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'register-shop',
         builder: (context, state) => const ShopRegistrationScreen(),
       ),
+      // StatefulShellRoute for bottom navigation
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainLayout(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Home
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/dashboard',
+                name: 'dashboard',
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
+          ),
+          // Branch 1: Scan
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/scan',
+                name: 'scanner',
+                builder: (context, state) => const BarcodeScannerScreen(),
+              ),
+            ],
+          ),
+          // Branch 2: Stock
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/products',
+                name: 'products',
+                builder: (context, state) => const ProductListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    name: 'products-add',
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      String? barcode;
+                      Map<String, dynamic>? prefillData;
+                      if (extra != null && extra is Map) {
+                        if (extra.containsKey('barcode')) {
+                          barcode = extra['barcode'] as String?;
+                        }
+                        if (extra.containsKey('prefill') && extra['prefill'] is Map) {
+                          prefillData = Map<String, dynamic>.from(extra['prefill'] as Map);
+                        }
+                      }
+                      return ProductFormScreen(
+                        initialBarcode: barcode,
+                        prefillData: prefillData,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    name: 'products-edit',
+                    builder: (context, state) {
+                      final product = state.extra as ProductModel;
+                      return ProductFormScreen(product: product);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'details',
+                    name: 'products-details',
+                    builder: (context, state) {
+                      final product = state.extra as ProductModel;
+                      return ProductDetailsScreen(product: product);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'import',
+                    name: 'products-import',
+                    builder: (context, state) => const BulkImportScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 3: Invoices
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/invoices',
+                name: 'invoices',
+                builder: (context, state) => const InvoiceListScreen(),
+              ),
+            ],
+          ),
+          // Branch 4: Reports
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/reports',
+                name: 'reports',
+                builder: (context, state) => const ReportsScreen(),
+              ),
+            ],
+          ),
+          // Branch 5: Settings
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                name: 'settings',
+                builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'printer',
+                    name: 'settings-printer',
+                    builder: (context, state) => const PrinterSettingsScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Other top-level routes preserved exactly as they were
       GoRoute(
-        path: '/dashboard',
-        name: 'dashboard',
-        builder: (context, state) => const DashboardScreen(),
+        path: '/pos',
+        name: 'pos',
+        builder: (context, state) => const POSScreen(),
+        routes: [
+          GoRoute(
+            path: 'scan',
+            name: 'pos-scan',
+            builder: (context, state) => const BarcodeScannerScreen(returnToPos: true),
+          ),
+        ],
       ),
       GoRoute(
         path: '/categories',
@@ -122,51 +275,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               final category = state.extra as CategoryModel;
               return CategoryFormScreen(category: category);
             },
-          ),
-        ]
-      ),
-      GoRoute(
-        path: '/products',
-        name: 'products',
-        builder: (context, state) => const ProductListScreen(),
-        routes: [
-          GoRoute(
-            path: 'add',
-            name: 'products-add',
-            builder: (context, state) {
-              final extra = state.extra;
-              String? barcode;
-              if (extra != null && extra is Map && extra.containsKey('barcode')) {
-                barcode = extra['barcode'] as String;
-              }
-              return ProductFormScreen(initialBarcode: barcode);
-            },
-          ),
-          GoRoute(
-            path: 'edit',
-            name: 'products-edit',
-            builder: (context, state) {
-              final product = state.extra as ProductModel;
-              return ProductFormScreen(product: product);
-            },
-          ),
-          GoRoute(
-            path: 'details',
-            name: 'products-details',
-            builder: (context, state) {
-              final product = state.extra as ProductModel;
-              return ProductDetailsScreen(product: product);
-            },
-          ),
-          GoRoute(
-            path: 'scanner',
-            name: 'scanner',
-            builder: (context, state) => const BarcodeScannerScreen(),
-          ),
-          GoRoute(
-            path: 'import',
-            name: 'products-import',
-            builder: (context, state) => const BulkImportScreen(),
           ),
         ]
       ),
@@ -196,25 +304,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const StockInScreen(),
       ),
       GoRoute(
-        path: '/pos',
-        name: 'pos',
-        builder: (context, state) => const POSScreen(),
-      ),
-      GoRoute(
-        path: '/cart',
-        name: 'cart',
-        builder: (context, state) => const CartScreen(),
-      ),
-      GoRoute(
-        path: '/checkout',
-        name: 'checkout',
-        builder: (context, state) => const CheckoutScreen(),
-      ),
-      GoRoute(
         path: '/sales',
-        name: 'sales-history',
+        name: 'sales',
         builder: (context, state) => const SalesHistoryScreen(),
         routes: [
+          GoRoute(
+            path: 'success/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return SaleSuccessScreen(saleId: id);
+            },
+          ),
           GoRoute(
             path: ':id',
             name: 'invoice-details',
@@ -222,19 +322,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               final id = state.pathParameters['id']!;
               return InvoiceDetailsScreen(saleId: id);
             },
+            routes: [
+              GoRoute(
+                path: 'refund',
+                name: 'sales-refund',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return RefundScreen(saleId: id);
+                },
+              ),
+            ],
           ),
         ],
       ),
-      GoRoute(
-        path: '/reports',
-        name: 'reports',
-        builder: (context, state) => const ReportsScreen(),
-      ),
-      GoRoute(
-        path: '/settings',
-        name: 'settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
+
       GoRoute(
         path: '/backups',
         name: 'backups',

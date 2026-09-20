@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:decimal/decimal.dart';
 import 'package:storemate/core/constants/app_constants.dart';
 import 'package:storemate/features/inventory/data/repositories/inventory_repository.dart';
 import 'package:storemate/features/product/data/models/product_model.dart';
@@ -85,7 +86,7 @@ class _InventoryAdjustmentModalState extends ConsumerState<InventoryAdjustmentMo
             const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
-              value: _selectedAction,
+              initialValue: _selectedAction,
               decoration: const InputDecoration(labelText: 'Action Type'),
               items: AppConstants.inventoryActions
                   .map((a) => DropdownMenuItem(value: a, child: Text(a.replaceAll('_', ' ').toUpperCase())))
@@ -103,8 +104,8 @@ class _InventoryAdjustmentModalState extends ConsumerState<InventoryAdjustmentMo
                 if (v == null || v.isEmpty) return 'Required';
                 final val = int.tryParse(v);
                 if (val == null || val <= 0) return 'Must be > 0';
-                if (['stock_out', 'sale'].contains(_selectedAction) && val > widget.product.quantity) {
-                  return 'Cannot reduce below 0';
+                if (['stock_out', 'sale'].contains(_selectedAction) && Decimal.fromInt(val) > widget.product.quantity) {
+                  return 'Cannot deduct more than current stock';
                 }
                 return null;
               },

@@ -8,6 +8,7 @@ class ProductsState {
   final int page;
   final String? searchQuery;
   final String? categoryId;
+  final Object? paginationError;
 
   ProductsState({
     required this.products,
@@ -15,6 +16,7 @@ class ProductsState {
     this.page = 1,
     this.searchQuery,
     this.categoryId,
+    this.paginationError,
   });
 
   ProductsState copyWith({
@@ -24,6 +26,8 @@ class ProductsState {
     String? searchQuery,
     String? categoryId,
     bool clearCategory = false,
+    Object? paginationError,
+    bool clearPaginationError = false,
   }) {
     return ProductsState(
       products: products ?? this.products,
@@ -31,6 +35,7 @@ class ProductsState {
       page: page ?? this.page,
       searchQuery: searchQuery ?? this.searchQuery,
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
+      paginationError: clearPaginationError ? null : (paginationError ?? this.paginationError),
     );
   }
 }
@@ -54,7 +59,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     }
     
     if (refresh) {
-      state = state.copyWith(page: 1, hasMore: true, products: const AsyncValue.loading());
+      state = state.copyWith(page: 1, hasMore: true, products: const AsyncValue.loading(), clearPaginationError: true);
     } else if (!state.hasMore || state.products.isLoading) {
       return;
     }
@@ -77,13 +82,13 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
         products: AsyncValue.data(updatedList),
         hasMore: state.page < meta['totalPages'],
         page: state.page + 1,
+        clearPaginationError: true,
       );
     } catch (e, st) {
       if (refresh) {
         state = state.copyWith(products: AsyncValue.error(e, st));
       } else {
-        // If it fails on pagination, don't overwrite the whole list with error.
-        // In a real app we'd handle pagination errors gracefully.
+        state = state.copyWith(paginationError: e);
       }
     }
   }

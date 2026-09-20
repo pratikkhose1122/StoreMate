@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:storemate/core/constants/app_colors.dart';
 
-/// Full-screen loading overlay with semi-transparent background.
-///
-/// Usage:
-/// ```dart
-/// Stack(
-///   children: [
-///     // Your content
-///     if (isLoading) const LoadingOverlay(),
-///   ],
-/// )
-/// ```
 class LoadingOverlay extends StatelessWidget {
   final String? message;
 
@@ -25,7 +14,7 @@ class LoadingOverlay extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -38,13 +27,12 @@ class LoadingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 40,
                 height: 40,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(context.colors.primary),
                 ),
               ),
               if (message != null) ...[
@@ -52,7 +40,7 @@ class LoadingOverlay extends StatelessWidget {
                 Text(
                   message!,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.colors.textSecondary,
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,

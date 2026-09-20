@@ -2,14 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:storemate/core/constants/app_colors.dart';
 import 'package:storemate/core/constants/app_text_styles.dart';
 
-/// Reusable primary button with loading state support.
-///
-/// Features:
-/// - Full-width by default
-/// - Loading spinner overlay
-/// - Optional leading icon
-/// - Disabled state when loading
-/// - Gradient background
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -34,19 +26,21 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final defaultBg = context.colors.primary;
+    final defaultText = context.colors.primaryForeground;
+
     return SizedBox(
       width: width ?? double.infinity,
       height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: isLoading ? null : AppColors.primaryGradient,
-          color: isLoading ? AppColors.textTertiary : null,
+          color: isLoading ? context.colors.textSecondary : (backgroundColor ?? defaultBg),
           borderRadius: BorderRadius.circular(14),
           boxShadow: isLoading
               ? null
               : [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: (backgroundColor ?? defaultBg).withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -57,7 +51,7 @@ class CustomButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
-            foregroundColor: textColor ?? AppColors.textOnPrimary,
+            foregroundColor: textColor ?? defaultText,
             disabledBackgroundColor: Colors.transparent,
             disabledForegroundColor: Colors.white70,
             shape: RoundedRectangleBorder(
@@ -65,13 +59,12 @@ class CustomButton extends StatelessWidget {
             ),
           ),
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(textColor ?? defaultText),
                   ),
                 )
               : Row(
@@ -82,7 +75,7 @@ class CustomButton extends StatelessWidget {
                       Icon(icon, size: 20),
                       const SizedBox(width: 8),
                     ],
-                    Text(text, style: AppTextStyles.buttonLarge),
+                    Text(text, style: AppTextStyles.btnLarge),
                   ],
                 ),
         ),

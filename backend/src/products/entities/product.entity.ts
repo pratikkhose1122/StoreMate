@@ -51,6 +51,12 @@ export class Product {
   @Column({ name: 'image_url', type: 'text', nullable: true })
   imageUrl?: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  brand?: string;
+
+  @Column({ name: 'package_size', type: 'varchar', length: 100, nullable: true })
+  packageSize?: string;
+
   @Column({
     name: 'purchase_price',
     type: 'decimal',

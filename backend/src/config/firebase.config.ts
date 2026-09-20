@@ -16,7 +16,7 @@ export function initializeFirebase(projectId: string): void {
     return;
   }
 
-  if (!projectId || projectId === 'your_firebase_project_id') {
+  if (!projectId || projectId.trim() === 'your_firebase_project_id') {
     logger.warn(
       'FIREBASE_PROJECT_ID is not configured. ' +
         'Firebase token verification will fail. ' +
@@ -25,7 +25,7 @@ export function initializeFirebase(projectId: string): void {
   }
 
   admin.initializeApp({
-    projectId,
+    projectId: projectId.trim(),
   });
 
   logger.log(`Firebase Admin SDK initialized for project: ${projectId}`);

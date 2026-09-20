@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:decimal/decimal.dart';
+import 'package:storemate/core/utils/decimal_converter.dart';
 
 part 'dashboard_summary_model.freezed.dart';
 part 'dashboard_summary_model.g.dart';
@@ -10,9 +12,10 @@ abstract class DashboardSummaryModel with _$DashboardSummaryModel {
     required int totalCategories,
     required int lowStockProducts,
     required int outOfStockProducts,
-    required double inventoryValue,
-    @Default(0) double todaysSales,
-    @Default(0) double todaysProfit,
+    @DecimalConverter() required Decimal inventoryValue,
+    @DecimalConverter() required Decimal todaysSales,
+    @DecimalConverter() required Decimal todaysProfit,
+    @Default(0) int todaysTransactionCount,
     @Default([]) List<Map<String, dynamic>> recentMovements,
     @Default([]) List<Map<String, dynamic>> recentProducts,
     @Default([]) List<Map<String, dynamic>> lowStockProductsList,

@@ -10,13 +10,6 @@ import 'package:storemate/features/auth/domain/auth_state.dart';
 import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
 import 'package:storemate/shared/widgets/custom_button.dart';
 
-/// OTP verification screen.
-///
-/// Displays a 6-digit OTP input and handles:
-/// - Manual OTP entry
-/// - Auto-fill on Android
-/// - Resend with countdown timer
-/// - Error display
 class OtpScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
 
@@ -38,7 +31,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   void initState() {
     super.initState();
     _startResendTimer();
-    // Auto-focus the OTP input
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -77,9 +69,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final otp = _otpController.text.trim();
     if (otp.length != AppConstants.otpLength) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the complete 6-digit OTP'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Please enter the complete 6-digit OTP'),
+          backgroundColor: context.colors.danger,
         ),
       );
       return;
@@ -98,7 +90,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen for navigation events
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) {
         context.go('/dashboard');
@@ -110,56 +101,56 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.errorMessage!),
-            backgroundColor: AppColors.error,
+            backgroundColor: context.colors.danger,
           ),
         );
         ref.read(authProvider.notifier).clearError();
       }
     });
 
-    // Pinput theme
     final defaultPinTheme = PinTheme(
       width: 52,
       height: 56,
       textStyle: AppTextStyles.h2.copyWith(
-        color: AppColors.primary,
+        color: context.colors.primary,
         fontWeight: FontWeight.w700,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.colors.elevatedCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
-        color: AppColors.primarySurface,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary, width: 2),
+        border: Border.all(color: context.colors.primary, width: 2),
       ),
     );
 
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
-        color: AppColors.primarySurface,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryLight),
+        border: Border.all(color: context.colors.primary),
       ),
     );
 
     final errorPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: context.colors.danger.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error),
+        border: Border.all(color: context.colors.danger),
       ),
     );
 
     return Scaffold(
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(Icons.arrow_back_rounded, color: context.colors.textPrimary),
           onPressed: () {
             ref.read(authProvider.notifier).resetOtpState();
             context.pop();
@@ -176,13 +167,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             children: [
               const SizedBox(height: 20),
 
-              // Header
-              Text('Verify Your Number', style: AppTextStyles.h2),
+              Text('Verify Your Number', style: AppTextStyles.h2.copyWith(color: context.colors.textPrimary)),
               const SizedBox(height: 12),
               RichText(
                 text: TextSpan(
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                  style: AppTextStyles.bodyMd.copyWith(
+                    color: context.colors.textSecondary,
                     height: 1.6,
                   ),
                   children: [
@@ -192,9 +182,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     TextSpan(
                       text:
                           '${AppConstants.countryCode} ${widget.phoneNumber}',
-                      style: AppTextStyles.bodyMedium.copyWith(
+                      style: AppTextStyles.bodyMd.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ],
@@ -203,7 +193,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               const SizedBox(height: 40),
 
-              // OTP Input
               Center(
                 child: Pinput(
                   controller: _otpController,
@@ -224,7 +213,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                         height: 3,
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -235,7 +224,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               const SizedBox(height: 32),
 
-              // Verify Button
               CustomButton(
                 text: 'Verify & Continue',
                 onPressed: _onVerify,
@@ -244,22 +232,21 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
               const SizedBox(height: 24),
 
-              // Resend OTP
               Center(
                 child: _canResend
                     ? TextButton(
                         onPressed: _onResend,
                         child: Text(
                           'Resend OTP',
-                          style: AppTextStyles.labelLarge.copyWith(
-                            color: AppColors.primary,
+                          style: AppTextStyles.labelLg.copyWith(
+                            color: context.colors.primary,
                           ),
                         ),
                       )
                     : Text(
                         'Resend OTP in ${_resendCountdown}s',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textTertiary,
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: context.colors.textSecondary,
                         ),
                       ),
               ),

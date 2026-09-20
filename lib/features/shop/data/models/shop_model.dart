@@ -12,6 +12,8 @@ class ShopModel {
   final String? gstNumber;
   final String invoicePrefix;
   final String? subscriptionStatus;
+  final String? upiId;
+  final Map<String, dynamic>? bankDetails;
   final DateTime? createdAt;
 
   const ShopModel({
@@ -27,6 +29,8 @@ class ShopModel {
     this.gstNumber,
     this.invoicePrefix = 'INV',
     this.subscriptionStatus,
+    this.upiId,
+    this.bankDetails,
     this.createdAt,
   });
 
@@ -35,15 +39,17 @@ class ShopModel {
       id: json['id'] as String,
       shopCode: json['shopCode'] as String,
       name: json['name'] as String,
-      ownerName: json['ownerName'] as String,
+      ownerName: json['ownerName'] as String? ?? '',
       mobileNumber: json['mobileNumber'] as String?,
       email: json['email'] as String?,
       address: json['address'] as String?,
       businessType: json['businessType'] as String,
       logoUrl: json['logoUrl'] as String?,
-      gstNumber: json['gstNumber'] as String?,
-      invoicePrefix: json['invoicePrefix'] as String? ?? 'INV',
-      subscriptionStatus: json['subscriptionStatus'] as String?,
+      gstNumber: (json['gstNumber'] ?? json['gstin'] ?? json['gst_number']) as String?,
+      invoicePrefix: (json['invoicePrefix'] ?? json['invoice_prefix']) as String? ?? 'INV',
+      subscriptionStatus: (json['subscriptionStatus'] ?? json['subscription_status']) as String?,
+      upiId: (json['upiId'] ?? json['upi_id']) as String?,
+      bankDetails: (json['bankDetails'] ?? json['bank_details']) as Map<String, dynamic>?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
@@ -64,6 +70,8 @@ class ShopModel {
       'gstNumber': gstNumber,
       'invoicePrefix': invoicePrefix,
       'subscriptionStatus': subscriptionStatus,
+      'upi_id': upiId,
+      'bank_details': bankDetails,
       'createdAt': createdAt?.toIso8601String(),
     };
   }

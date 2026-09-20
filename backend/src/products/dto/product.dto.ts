@@ -41,6 +41,16 @@ export class CreateProductDto {
   @IsOptional()
   imageUrl?: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  brand?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  packageSize?: string;
+
   @IsNumber()
   @Min(0)
   @Type(() => Number)
@@ -102,6 +112,16 @@ export class UpdateProductDto {
   @IsString()
   @IsOptional()
   imageUrl?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  brand?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  packageSize?: string | null;
 
   @IsNumber()
   @Min(0)

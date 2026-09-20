@@ -8,7 +8,10 @@ import 'package:storemate/features/shop/data/repositories/shop_repository.dart';
 
 /// Provider for [ShopRepository].
 final shopRepositoryProvider = Provider<ShopRepository>((ref) {
-  return ShopRepository(ref.watch(dioClientProvider));
+  return ShopRepository(
+    ref.watch(dioClientProvider),
+    ref.watch(secureStorageProvider),
+  );
 });
 
 /// State for shop registration.
@@ -71,37 +74,35 @@ class ShopRegistrationNotifier extends StateNotifier<ShopRegistrationState> {
     String? mobileNumber,
     String? email,
     String? address,
+    String? gstNumber,
     required String businessType,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      final result = await _shopRepository.createShop(
+      final shop = await _shopRepository.createShop(
         name: name,
         ownerName: ownerName,
         mobileNumber: mobileNumber,
         email: email,
         address: address,
+        gstNumber: gstNumber,
         businessType: businessType,
       );
 
-      // Update the stored JWT with the new one containing shop_id
-      await _authRepository.updateToken(result.accessToken);
-
       // Notify the auth provider that shop registration is complete
       _authNotifier.onShopRegistered(
-        accessToken: result.accessToken,
-        shop: result.shop,
+        shop: shop,
       );
 
       state = state.copyWith(
         isLoading: false,
-        shop: result.shop,
+        shop: shop,
         isSuccess: true,
       );
 
       debugPrint(
-        'ShopRegistration: Success — ${result.shop.shopCode} "${result.shop.name}"',
+        'ShopRegistration: Success — ${shop.shopCode} "${shop.name}"',
       );
     } catch (e) {
       debugPrint('ShopRegistration: Failed — $e');

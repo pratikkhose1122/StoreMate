@@ -27,8 +27,40 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // On 401, the auth provider will handle logout/redirect
-    // We just pass the error through
+    // Graceful error handling for UI providers
+    String? userMessage;
+
+    if (err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.sendTimeout) {
+      userMessage = 'Network timeout. Please check your connection.';
+    } else if (err.type == DioExceptionType.connectionError) {
+      userMessage = 'Unable to connect to server. Please check your internet connection.';
+    } else if (err.response != null) {
+      final statusCode = err.response!.statusCode;
+      if (statusCode == 401) {
+        // userMessage = 'Your session has expired. Please log in again.';
+        userMessage = err.response?.data['message'] ?? err.response?.data['error'] ?? 'Authentication failed (401).';
+      } else if (statusCode == 500 || statusCode == 502 || statusCode == 503) {
+        userMessage = 'The server is currently unavailable. Please try again later.';
+      }
+    }
+
+    if (userMessage != null) {
+      // Inject the user-friendly message into the response data
+      // so downstream repositories can easily extract it.
+      if (err.response != null) {
+        err.response!.data = {'message': userMessage};
+      } else {
+        final mockResponse = Response(
+          requestOptions: err.requestOptions,
+          data: {'message': userMessage},
+        );
+        final newErr = err.copyWith(response: mockResponse);
+        return handler.next(newErr);
+      }
+    }
+
     handler.next(err);
   }
 }

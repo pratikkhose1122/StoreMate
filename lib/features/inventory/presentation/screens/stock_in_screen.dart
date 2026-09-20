@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:storemate/core/constants/app_colors.dart';
 import 'package:storemate/features/product/data/models/product_model.dart';
 import 'package:storemate/features/product/presentation/providers/products_provider.dart';
 import 'package:storemate/features/inventory/data/repositories/inventory_repository.dart';

@@ -10,9 +10,9 @@ class ApiConstants {
   static String get baseUrl => AppConfig.baseUrl;
 
   /// Timeouts
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
-  static const Duration sendTimeout = Duration(seconds: 30);
+  static const Duration connectTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 60);
+  static const Duration sendTimeout = Duration(seconds: 60);
 
   // ── Auth Endpoints ────────────────────────────────────────
   static const String login = '/auth/login';
@@ -39,4 +39,10 @@ class ApiConstants {
   static const String inventory = '/inventory';
   static const String customers = '/customers';
   static const String sales = '/sales';
+
+  // ── Reports Endpoints ──────────────────────────────────────
+  static const String reportsSales = '/reports/sales';
+  static const String reportsProfit = '/reports/profit';
+  static const String reportsTopProducts = '/reports/top-products';
+  static const String reportsSlowProducts = '/reports/slow-products';
 }

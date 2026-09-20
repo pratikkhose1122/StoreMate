@@ -1,16 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:storemate/core/providers/core_providers.dart';
+import 'package:storemate/features/auth/presentation/providers/auth_provider.dart';
 import 'package:storemate/features/auth/data/models/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/staff_repository.dart';
 
 final staffRepositoryProvider = Provider<StaffRepository>((ref) {
-  final apiClient = ref.watch(dioClientProvider);
-  return StaffRepository(apiClient);
+  return StaffRepository(Supabase.instance.client);
 });
 
 final staffListProvider = FutureProvider.autoDispose<List<UserModel>>((ref) async {
   final repository = ref.watch(staffRepositoryProvider);
-  return repository.getStaff();
+  final authState = ref.watch(authProvider);
+  
+  if (authState.shop == null) {
+    return [];
+  }
+  
+  return repository.getStaff(authState.shop!.id);
 });
 
 class StaffNotifier extends StateNotifier<AsyncValue<void>> {
@@ -26,7 +32,16 @@ class StaffNotifier extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.inviteStaff(name: name, mobileNumber: mobileNumber, role: role);
+      final authState = _ref.read(authProvider);
+      if (authState.shop == null) {
+        throw Exception('No active shop found');
+      }
+      
+      await _repository.inviteStaff(
+        shopId: authState.shop!.id,
+        mobileNumber: mobileNumber, 
+        role: role
+      );
       state = const AsyncValue.data(null);
       _ref.invalidate(staffListProvider);
     } catch (e, st) {
